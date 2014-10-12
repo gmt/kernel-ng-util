@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
-
+# vim:ai:sta:et:ts=4:sw=4:sts=4
 
 """Look, Ma!  No sources! 0.x
  Tool for selecting kernel options.
@@ -31,4 +31,3 @@ Distributed under the terms of the GNU General Public License v2
 """
 
 version = "0.1.0"
-

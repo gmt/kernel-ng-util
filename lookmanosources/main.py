@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+# vim:ai:sta:et:ts=4:sw=4:sts=4
 
 """Look, Ma!  No sources! 0.x
  Tool for selecting kernel options.
@@ -29,9 +30,7 @@ Distributed under the terms of the GNU General Public License v2
 
 """
 
-
 from __future__ import print_function
-
 
 import os
 import sys
@@ -47,7 +46,6 @@ try:
 except ImportError:
 	rootuid = 0
 
-
 # establish the eprefix, initially set so eprefixify can
 # set it on install
 EPREFIX = ""
@@ -55,7 +53,6 @@ EPREFIX = ""
 # check and set it if it wasn't
 if "GENTOO_PORTAGE_EPREFIX" in EPREFIX:
     EPREFIX = ''
-
 
 class LookMaNoSources(object):
 	'''Main operational class'''
@@ -67,7 +64,6 @@ class LookMaNoSources(object):
 			or None for the default instance
 		'''
 		self.output = output or Output()
-
 
 	@staticmethod
 	def _have_bin(name):
@@ -85,7 +81,6 @@ class LookMaNoSources(object):
 			if os.path.isfile(file_path) and os.access(file_path, os.X_OK):
 				return file_path
 		return None
-
 
 	def change_config(self, features, out, config_path, sync=False):
 		"""Writes the config changes to the given file, or to stdout.
@@ -105,13 +100,11 @@ class LookMaNoSources(object):
 			write_kernel_ng_conf(self.output, config_path,
                                 'features', feature_string)
 
-
 	@staticmethod
 	def write_to_output(feature_string):
 		print()
 		print(feature_string)
 		sys.exit(0)
-
 
 	def _parse_args(self, argv, config_path):
 		"""
@@ -160,16 +153,11 @@ class LookMaNoSources(object):
 			"-q", "--quiet", action="store_const", const=0, dest="verbosity",
 			help="Quiet mode")
 
-
 		if len(argv) == 1:
 			parser.print_help()
 			sys.exit(1)
 
 		options, args = parser.parse_args(argv[1:])
-
-		# sanity checks
-
-		# hack: check if more than one of these is set
 
 		if (os.getuid() != rootuid) and not options.output:
 			self.output.print_err('Must be root to write to %s!\n' % config_path)
@@ -195,7 +183,6 @@ class LookMaNoSources(object):
 		]
 		return features
 
-
 	def select_features(self, features, options):
 		'''Returns the list of selected host urls using
 		the options passed in interactive ncurses dialog
@@ -207,7 +194,6 @@ class LookMaNoSources(object):
 		selector = Interactive(features, options, self.output)
 		return selector.features
 
-
 	def get_conf_path(self):
 		'''Checks for the existance of repos.conf or make.conf in /etc/portage/
 		Failing that it checks for it in /etc/
@@ -216,7 +202,6 @@ class LookMaNoSources(object):
 		@rtype: string
 		'''
 		return get_kernel_ng_conf_path(EPREFIX)
-
 
 	def main(self, argv):
 		"""Lets Rock!

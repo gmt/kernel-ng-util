@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
+# vim:ai:sta:et:ts=4:sw=4:sts=4
 
 from __future__ import print_function
-
 
 import re
 import sys
@@ -11,7 +11,6 @@ from distutils import core, log
 import os
 import io
 import re
-
 
 __version__ = os.getenv('VERSION', default=os.getenv('PVR', default='9999'))
 
@@ -25,7 +24,6 @@ EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
 if "GENTOO_PORTAGE_EPREFIX" in EPREFIX:
     EPREFIX = ''
 
-
 # Python files that need `version = ""` subbed, relative to this dir:
 python_scripts = [os.path.join(cwd, path) for path in (
 	'lookmanosources/version.py',
@@ -35,18 +33,16 @@ manpage = [os.path.join(cwd, path) for path in (
 	'look-ma-no-sources.8',
 )]
 
-
 class set_version(core.Command):
 	"""Set python version to our __version__."""
+
 	description = "hardcode scripts' version using VERSION from environment"
 	user_options = []  # [(long_name, short_name, desc),]
 
 	def initialize_options (self):
 		pass
-
 	def finalize_options (self):
 		pass
-
 	def run(self):
 		ver = 'git' if __version__ == '9999' else __version__
 		print("Setting version to %s" % ver)
@@ -66,7 +62,6 @@ class set_version(core.Command):
 		sub(python_scripts, python_re)
 		man_re = r'(?<=^.TH "look-ma-no-sources" "8" )' + quote + '[^\'"]*' + quote
 		sub(manpage, man_re)
-
 
 def	load_test():
 	"""Only return the real test class if it's actually being run so that we
@@ -117,4 +112,3 @@ core.setup(
 		'set_version': set_version,
 	},
 )
-

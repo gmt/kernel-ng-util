@@ -1,4 +1,5 @@
 #-*- coding:utf-8 -*-
+# vim:ai:sta:et:ts=4:sw=4:sts=4
 
 """Look, Ma!  No sources! 0.x
  Tool for selecting kernel options.
@@ -28,19 +29,15 @@ Distributed under the terms of the GNU General Public License v2
 
 """
 
-
 from __future__ import print_function
-
 
 import os
 import string
-
 
 try: # py2
 	letters = string.letters
 except AttributeError: # py3
 	letters = string.ascii_letters
-
 
 def get_kernel_ng_conf_path(EPREFIX):
 	return EPREFIX + '/etc/kernel-ng.conf'

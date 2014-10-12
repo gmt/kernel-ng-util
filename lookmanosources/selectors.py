@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+# vim:ai:sta:et:ts=4:sw=4:sts=4
 
 """Look, Ma!  No sources! 0.x
  Tool for selecting kernel options.
@@ -34,9 +35,7 @@ import sys
 import hashlib
 import subprocess
 
-
 from lookmanosources.output import encoder, get_encoding, decode_selection
-
 
 class Interactive(object):
     """Handles interactive features selection."""
@@ -76,4 +75,3 @@ class Interactive(object):
                     [x.decode('utf-8').rstrip() for x in self.features])
             else:
                 self.features= decode_selection([x.rstrip() for x in self.features])
-

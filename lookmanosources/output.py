@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+# vim:ai:sta:et:ts=4:sw=4:sts=4
 
 """Look, Ma!  No sources! 0.x
  Tool for selecting kernel options.
@@ -29,7 +30,6 @@ Distributed under the terms of the GNU General Public License v2
 
 """
 
-
 import sys
 import re
 import codecs
@@ -37,10 +37,8 @@ import locale
 
 from optparse import IndentedHelpFormatter
 
-
 def encoder(text, _encoding_):
     return codecs.encode(text, _encoding_, 'replace')
-
 
 def decode_selection(selection):
     '''utility function to decode a list of strings
@@ -52,7 +50,6 @@ def decode_selection(selection):
     if enc is not None:
         return [encoder(i, enc) for i in selection]
     return selection
-
 
 def get_encoding(output):
     if hasattr(output, 'encoding') \
@@ -69,7 +66,6 @@ def get_encoding(output):
             # Python does not know the encoding, so use utf-8.
             encoding = 'utf_8'
         return encoding
-
 
 class Output(object):
 	"""Handles text output. Only prints messages with level <= verbosity.
@@ -133,7 +129,6 @@ class Output(object):
 			self.file.write(message)
 			self.file.flush()
 
-
 class ColoredFormatter(IndentedHelpFormatter):
 
 	"""HelpFormatter with colorful output.
@@ -174,4 +169,3 @@ class ColoredFormatter(IndentedHelpFormatter):
 	def format_description(self, description):
 		"""Do not wrap."""
 		return description + '\n'
-
