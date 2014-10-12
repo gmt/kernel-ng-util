@@ -199,7 +199,7 @@ class LookMaNoSources(object):
 		@rtype: list
 		'''
 		selector = Interactive(features, options, self.output)
-		return selector.urls
+		return selector.features
 
 
 	def get_conf_path(self):
