@@ -27,6 +27,7 @@ Distributed under the terms of the GNU General Public License v2
 import signal
 import sys
 import hashlib
+import subprocess
 
 
 from lookmanosources.output import encoder, get_encoding, decode_selection
