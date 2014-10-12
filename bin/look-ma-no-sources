@@ -7,12 +7,12 @@
 
 Copyright 2005-2014 Gentoo Foundation
 
-	Copyright (C) 2005 Colin Kingsley <tercel@gentoo.org>
-	Copyright (C) 2008 Zac Medico <zmedico@gentoo.org>
-	Copyright (C) 2009 Sebastian Pipping <sebastian@pipping.org>
-	Copyright (C) 2009 Christian Ruppert <idl0r@gentoo.org>
-	Copyright (C) 2012 Brian Dolbec <dolsen@gentoo.org>
-	Copyright (C) 2014 Gregory M. Turner <gmt@be-evil.net>
+        Copyright (C) 2005 Colin Kingsley <tercel@gentoo.org>
+        Copyright (C) 2008 Zac Medico <zmedico@gentoo.org>
+        Copyright (C) 2009 Sebastian Pipping <sebastian@pipping.org>
+        Copyright (C) 2009 Christian Ruppert <idl0r@gentoo.org>
+        Copyright (C) 2012 Brian Dolbec <dolsen@gentoo.org>
+        Copyright (C) 2014 Gregory M. Turner <gmt@be-evil.net>
 
 Distributed under the terms of the GNU General Public License v2
  This program is free software; you can redistribute it and/or modify
@@ -36,28 +36,28 @@ import sys
 
 # This block ensures that ^C interrupts are handled quietly.
 try:
-	import signal
+    import signal
 
-	def exithandler(signum,frame):
-		signal.signal(signal.SIGINT, signal.SIG_IGN)
-		signal.signal(signal.SIGTERM, signal.SIG_IGN)
-		print('Caught signal %s. Exiting' % signum)
-		sys.exit(1)
+    def exithandler(signum,frame):
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        print('Caught signal %s. Exiting' % signum)
+        sys.exit(1)
 
-	signal.signal(signal.SIGINT, exithandler)
-	signal.signal(signal.SIGTERM, exithandler)
-	signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    signal.signal(signal.SIGINT, exithandler)
+    signal.signal(signal.SIGTERM, exithandler)
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 except KeyboardInterrupt:
-	print()
-	sys.exit(1)
+    print()
+    sys.exit(1)
 
 from lookmanosources.main import LookMaNoSources
 
 try:
-	LookMaNoSources().main(sys.argv)
+    LookMaNoSources().main(sys.argv)
 except KeyboardInterrupt:
-	print("Aborted.")
-	sys.exit(130)
+    print("Aborted.")
+    sys.exit(130)
 sys.exit(0)
 
