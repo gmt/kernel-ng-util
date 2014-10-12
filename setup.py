@@ -6,7 +6,8 @@ from __future__ import print_function
 
 import re
 import sys
-from distutils import core, log
+from setuptools import setup, Command
+from distutils import log
 
 import os
 import io
@@ -33,7 +34,7 @@ manpage = [os.path.join(cwd, path) for path in (
     'look-ma-no-sources.8',
 )]
 
-class set_version(core.Command):
+class set_version(Command):
     """Set python version to our __version__."""
     description = "hardcode scripts' version using VERSION from environment"
     user_options = []  # [(long_name, short_name, desc),]
@@ -80,7 +81,7 @@ def load_test():
             description = desc
             default_test_namespace = 'lookmanosources.test'
     else:
-        class test(core.Command):
+        class test(Command):
             description = desc
 
     return test
@@ -90,7 +91,7 @@ test_data = {
     ]
 }
 
-core.setup(
+setup(
     name='look-ma-no-sources',
     version=__version__,
     description='Tool for maintaining site-specific Gentoo overlays of customized kernel-ng ebuilds.',
