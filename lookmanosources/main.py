@@ -183,8 +183,8 @@ class LookMaNoSources(object):
 		@rtype: list
 		'''
 		# self.output.write("using features:\n" % FEATURES_XML, 2)
-                features = [ {'name': 'foo', 'description': 'fooness'},
-                             {'name': 'bar', 'description': 'barness'} ]
+		features = [ {'name': 'foo', 'description': 'fooness'},
+		    {'name': 'bar', 'description': 'barness'} ]
 		return features
 
 
