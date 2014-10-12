@@ -28,7 +28,7 @@ if "GENTOO_PORTAGE_EPREFIX" in EPREFIX:
 
 # Python files that need `version = ""` subbed, relative to this dir:
 python_scripts = [os.path.join(cwd, path) for path in (
-	'look-ma-no-sources/version.py',
+	'lookmanosources/version.py',
 )]
 
 manpage = [os.path.join(cwd, path) for path in (
@@ -82,7 +82,7 @@ def	load_test():
 			sys.exit(1)
 		class test(distutils_extensions.test):
 			description = desc
-			default_test_namespace = 'look-ma-no-sources.test'
+			default_test_namespace = 'lookmanosources.test'
 	else:
 		class test(core.Command):
 			description = desc
