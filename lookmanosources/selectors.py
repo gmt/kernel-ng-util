@@ -55,23 +55,22 @@ class Interactive(object):
             '"Select kernel feature sets:"', '--checklist',
             '"Please select your desired features:']
         dialog.extend(['20', '110', '14'])
-        for (feature, args) in sorted(features, key = lambda x:
-            (x[1]['feature'], x[1]['description']) ):
+        for (feature, args) in sorted(features, key = lambda x: x[1]['feature'].lower()):
             dialog.extend(["%s" %feature,
                 "%s: %s" %(args['feature'], args['description']),
                 "OFF"])
-            dialog = [encoder(x, get_encoding(sys.stdout)) for x in dialog]
-            proc = subprocess.Popen( dialog,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        dialog = [encoder(x, get_encoding(sys.stdout)) for x in dialog]
+        proc = subprocess.Popen( dialog,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-            out, err = proc.communicate()
+        out, err = proc.communicate()
 
-            self.features = out.splitlines()
+        self.features = out.splitlines()
 
-            if self.features:
-                if hasattr(self.features[0], 'decode'):
-                    self.features = decode_selection(
-                        [x.decode('utf-8').rstrip() for x in self.features])
-                else:
-                    self.features= decode_selection([x.rstrip() for x in self.features])
+        if self.features:
+            if hasattr(self.features[0], 'decode'):
+                self.features = decode_selection(
+                    [x.decode('utf-8').rstrip() for x in self.features])
+            else:
+                self.features= decode_selection([x.rstrip() for x in self.features])
 
