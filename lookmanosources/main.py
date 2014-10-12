@@ -200,7 +200,7 @@ class LookMaNoSources(object):
 		return selector.urls
 
 
-	def get_conf_path(self, rsync=False):
+	def get_conf_path(self):
 		'''Checks for the existance of repos.conf or make.conf in /etc/portage/
 		Failing that it checks for it in /etc/
 		Failing in /etc/ it defaults to /etc/portage/make.conf
@@ -221,7 +221,7 @@ class LookMaNoSources(object):
 		self.output.write("main(); config_path = %s\n" % config_path, 2)
 
 		# reset config_path to find repos.conf/gentoo.conf if it exists
-		config_path = self.get_conf_path(options.rsync)
+		config_path = self.get_conf_path()
 		self.output.write("main(); reset config_path = %s\n" % config_path, 2)
 
 		features = self.get_available_features(options)
