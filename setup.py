@@ -45,6 +45,7 @@ class set_version(core.Command):
     def run(self):
         ver = 'git' if __version__ == '9999' else __version__
         print("Setting version to %s" % ver)
+
         def sub(files, pattern):
             for f in files:
                 updated_file = []
@@ -56,11 +57,12 @@ class set_version(core.Command):
                         updated_file.append(newline)
                 with io.open(f, 'w', 1, 'utf_8') as s:
                     s.writelines(updated_file)
-    quote = r'[\'"]{1}'
-    python_re = r'(?<=^version = )' + quote + '[^\'"]*' + quote
-    sub(python_scripts, python_re)
-    man_re = r'(?<=^.TH "look-ma-no-sources" "8" )' + quote + '[^\'"]*' + quote
-    sub(manpage, man_re)
+
+        quote = r'[\'"]{1}'
+        python_re = r'(?<=^version = )' + quote + '[^\'"]*' + quote
+        sub(python_scripts, python_re)
+        man_re = r'(?<=^.TH "look-ma-no-sources" "8" )' + quote + '[^\'"]*' + quote
+        sub(manpage, man_re)
 
 def load_test():
     """Only return the real test class if it's actually being run so that we
