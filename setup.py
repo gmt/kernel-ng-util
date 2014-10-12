@@ -74,11 +74,11 @@ def load_test():
             from snakeoil import distutils_extensions
         except ImportError:
             sys.stderr.write("Error: We depend on dev-python/snakeoil ")
-                    sys.stderr.write("to run tests.\n")
-                    sys.exit(1)
-            class test(distutils_extensions.test):
-                description = desc
-                    default_test_namespace = 'lookmanosources.test'
+            sys.stderr.write("to run tests.\n")
+            sys.exit(1)
+        class test(distutils_extensions.test):
+            description = desc
+            default_test_namespace = 'lookmanosources.test'
     else:
         class test(core.Command):
             description = desc
@@ -86,29 +86,29 @@ def load_test():
     return test
 
 test_data = {
-        'look-ma-no-sources': [
-        ]
+    'look-ma-no-sources': [
+    ]
 }
 
 core.setup(
-        name='look-ma-no-sources',
-        version=__version__,
-        description='Tool for maintaining site-specific Gentoo overlays of customized kernel-ng ebuilds.',
-        author='Gregory M. Turner',
-        author_email='gmt@be-evil.net',
-        maintainer='Gregory M. Turner',
-        maintainer_email='gmt@be-evil.net',
-        url='https://github.com/gmt/look-ma-no-sources',
-        download_url='https://github.com/gmt/look-ma-no-sources/releases/downloads/v%(pv)s/look-ma-no-sources-%(pv)s.tar.gz' \
-                % {'pv': re.sub(r'-r[[:digit:]]*$', r'', __version__)},
-                packages=['lookmanosources'],
-                #package_data = test_data,
-                scripts=(['bin/look-ma-no-sources']),
-                data_files=(
-                    (os.path.join(os.sep, EPREFIX.lstrip(os.sep), 'usr/share/man/man8'), ['look-ma-no-sources.8']),
-                ),
-                cmdclass={
-                    'test': load_test(),
-                    'set_version': set_version,
-                },
+    name='look-ma-no-sources',
+    version=__version__,
+    description='Tool for maintaining site-specific Gentoo overlays of customized kernel-ng ebuilds.',
+    author='Gregory M. Turner',
+    author_email='gmt@be-evil.net',
+    maintainer='Gregory M. Turner',
+    maintainer_email='gmt@be-evil.net',
+    url='https://github.com/gmt/look-ma-no-sources',
+    download_url='https://github.com/gmt/look-ma-no-sources/releases/downloads/v%(pv)s/look-ma-no-sources-%(pv)s.tar.gz' \
+        % {'pv': re.sub(r'-r[[:digit:]]*$', r'', __version__)},
+    packages=['lookmanosources'],
+    #package_data = test_data,
+    scripts=(['bin/look-ma-no-sources']),
+    data_files=(
+        (os.path.join(os.sep, EPREFIX.lstrip(os.sep), 'usr/share/man/man8'), ['look-ma-no-sources.8']),
+    ),
+    cmdclass={
+        'test': load_test(),
+        'set_version': set_version,
+    },
 )
