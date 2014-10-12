@@ -47,12 +47,12 @@ class Interactive(object):
             sys.exit(1)
 
     def interactive(self, features, options):
-       """
+        """
         Some sort of interactive menu thingy.
-       """
+        """
         dialog = ['dialog', '--separate-output', '--stdout', '--title',
             '"Select kernel feature sets:"', '--checklist',
-           '"Please select your desired features:']
+            '"Please select your desired features:']
         dialog.extend(['20', '110', '14'])
         for (feature, args) in sorted(features, key = lambda x:
             (x[1]['feature'], x[1]['description']) ):
