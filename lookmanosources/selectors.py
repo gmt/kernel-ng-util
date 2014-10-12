@@ -56,9 +56,7 @@ class Interactive(object):
             '"Please select your desired features:']
         dialog.extend(['20', '110', '14'])
         for (feature, args) in sorted(features, key = lambda x: x[1]['feature'].lower()):
-            dialog.extend(["%s" %feature,
-                "%s: %s" %(args['feature'], args['description']),
-                "OFF"])
+            dialog.extend([ "%s" % feature, "%s" % args['description'], "OFF" ])
         dialog = [encoder(x, get_encoding(sys.stdout)) for x in dialog]
         proc = subprocess.Popen( dialog,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
