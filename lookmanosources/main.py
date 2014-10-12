@@ -92,12 +92,13 @@ class LookMaNoSources(object):
 		if hasattr(features[0], 'decode'):
 			features = [x.decode('utf-8') for x in features]
 
-		feature_string = 'features = "%s"' % (var, ' '.join(features))
+		feature_string = 'features = "%s"' % ' '.join(features)
 
 		if out:
 			self.write_to_output(feature_string)
 		else:
-			write_kernel_ng_conf(self.output, config_path, var, feature_string)
+			write_kernel_ng_conf(self.output, config_path,
+                                'features', feature_string)
 
 
 	@staticmethod
