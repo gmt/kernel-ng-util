@@ -34,7 +34,7 @@ from __future__ import print_function
 
 import os
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 from lookmanosources.output import Output, ColoredFormatter
 from lookmanosources.selectors import Interactive
 from lookmanosources.configs import get_kernel_ng_conf_path
@@ -113,56 +113,52 @@ class LookMaNoSources(object):
         The descriptions, grouping, and possibly the amount sanity checking
         need some finishing touches.
         """
-        desc = "\n".join((
-            self.output.white("examples:"),
-            "",
-            self.output.white("	 automatic:"),
-            "		 # look-ma-no-sources -foo",
-            "		 # look-ma-no-sources --bar --baz >> /mnt/gentoo/etc/kernel-ng/kernel-ng.conf",
-            "",
-            self.output.white("	 interactive:"),
-            "		 # look-ma-no-sources -i",
-            ))
-        parser = OptionParser(
-            formatter=ColoredFormatter(self.output), description=desc,
-            version='Look, Ma!  No sources!  version: %s' % version)
+        usage = ''.join(( self.output.white(r"%(prog)s"),
+            " [", self.output.white("-h"), "|", self.output.white("--help"),
+            "] [", self.output.white("-V"), "|", self.output.white("--version"),
+            "] [<", self.output.blue("sub-command"),
+            "> [<", self.output.blue("sub-command-option"), "> ...]]" ))
+        p = ArgumentParser(prog='look-ma-no-sources',
+            usage=usage,
+            description='A utility to maintain site-specific overlays of kernel-ng-based ebuilds.')
 
-        group = parser.add_option_group("Main modes")
-        group.add_option(
-            "-i", "--interactive", action="store_true", default=False,
-            help="Interactive Mode, this will present a list "
-                "to make it possible to select mirrors you wish to use.")
+        p.add_argument( '--version', '-V',
+            action='version',
+            version='Look, Ma!  No sources!  Version: %s' % version)
 
-        group = parser.add_option_group("Other options")
-        group.add_option(
-            "-d", "--debug", action="store", type="int", dest="verbosity",
-            default=1, help="debug mode, pass in the debug level [1-9]")
-        group.add_option(
-            "-f", "--file", action="store", default='mirrorselect-test',
-            help="An alternate file to download for deep testing. "
-                    "Please choose the file carefully as to not abuse the system "
-                    "by selecting an overly large size file.  You must also "
-                    " use the -m, --md5 option.")
-        group.add_option(
-            "-o", "--output", action="store_true", default=False,
-            help="Output Only Mode, this is especially useful "
-                "when being used during installation, to redirect "
-                "output to a file other than %s" % config_path)
-        group.add_option(
-            "-q", "--quiet", action="store_const", const=0, dest="verbosity",
-            help="Quiet mode")
+#        group = p.add_option_group("Main modes")
+#        group.add_option(
+#            "-i", "--interactive", action="store_true", default=False,
+#            help="Interactive Mode, this will present a list "
+#                "to make it possible to select mirrors you wish to use.")
+#
+#        group = p.add_option_group("Other options")
+#        group.add_option(
+#            "-d", "--debug", action="store", type="int", dest="verbosity",
+#            default=1, help="debug mode, pass in the debug level [1-9]")
+#        group.add_option(
+#            "-f", "--file", action="store", default='mirrorselect-test',
+#            help="An alternate file to download for deep testing. "
+#                    "Please choose the file carefully as to not abuse the system "
+#                    "by selecting an overly large size file.  You must also "
+#                    " use the -m, --md5 option.")
+#        group.add_option(
+#            "-o", "--output", action="store_true", default=False,
+#            help="Output Only Mode, this is especially useful "
+#                "when being used during installation, to redirect "
+#                "output to a file other than %s" % config_path)
+#        group.add_option(
+#            "-q", "--quiet", action="store_const", const=0, dest="verbosity",
+#            help="Quiet mode")
 
         if len(argv) == 1:
-            parser.print_help()
+            p.print_help()
             sys.exit(1)
 
-        options, args = parser.parse_args(argv[1:])
+        options = p.parse_args()
 
         if (os.getuid() != rootuid) and not options.output:
             self.output.print_err('Must be root to write to %s!\n' % config_path)
-
-        if args:
-            self.output.print_err('Unexpected arguments passed.')
 
         # return results
         return options
@@ -172,7 +168,7 @@ class LookMaNoSources(object):
         '''Returns a list of features suitable for consideration by a user
         based on user input
 
-        @param options: parser.parse_args() options instance
+        @param options: p.parse_args() options instance
         @rtype: list
         '''
         # self.output.write("using features:\n" % FEATURES_XML, 2)
@@ -187,7 +183,7 @@ class LookMaNoSources(object):
         the options passed in interactive ncurses dialog
 
         @param hosts: list of features to choose from
-        @param options: parser.parse_args() options instance
+        @param options: p.parse_args() options instance
         @rtype: list
         '''
         selector = Interactive(features, options, self.output)
