@@ -34,7 +34,7 @@ from __future__ import print_function
 
 import os
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, SUPPRESS
 from lookmanosources.output import Output, ColoredFormatter
 from lookmanosources.selectors import Interactive
 from lookmanosources.configs import get_kernel_ng_conf_path
@@ -105,6 +105,10 @@ class LookMaNoSources(object):
         print(feature_string)
         sys.exit(0)
 
+    @property
+    def progname(self):
+        sys.argv[0].split(os.path.sep)[:-1]
+
     def _parse_args(self, argv, config_path):
         """
         Does argument parsing and some sanity checks.
@@ -113,18 +117,86 @@ class LookMaNoSources(object):
         The descriptions, grouping, and possibly the amount sanity checking
         need some finishing touches.
         """
-        usage = ''.join(( self.output.white(r"%(prog)s"),
+        progusage = self.output.white(r"%(prog)s")
+        usage = ''.join(( progusage,
             " [", self.output.white("-h"), "|", self.output.white("--help"),
             "] [", self.output.white("-V"), "|", self.output.white("--version"),
             "] [<", self.output.blue("sub-command"),
             "> [<", self.output.blue("sub-command-option"), "> ...]]" ))
-        p = ArgumentParser(prog='look-ma-no-sources',
+        p = ArgumentParser(prog=self.progname,
             usage=usage,
             description='A utility to maintain site-specific overlays of kernel-ng-based ebuilds.')
 
         p.add_argument( '--version', '-V',
             action='version',
             version='Look, Ma!  No sources!  Version: %s' % version)
+        p.add_argument('-n', '--name', help='Name of the new overlay to be created.  '
+            'If not provided, the global default name "kernel-ng" will be used.', action='store',
+            dest='name')
+        p.add_argument('-v', '--verbose', help='Verbosely explain what is happening and why.',
+            action='store_true', dest='beverbose')
+        p.add_argument('-q', '--quiet', help='Don\'t bother with informational messages.',
+            action='store_true', dest='bequiet')
+        p.add_argument('--no-save-config', '-1', help='Create the overlay but do not record '
+            'its presence in the active configuration file.', action='store_false',
+            dest='saveconfig')
+        p.add_argument('-p', '--path', help='Filesystem path where the overlay is to be '
+            'found.  If not specified, the overlay path from the configuration file '
+            'will be used, or, if none is configured, the default value of '
+            '%s/usr/local/portage/ng-kernels will be used.' % EPREFIX, nargs=2,
+            default=SUPPRESS, dest='path')
+        p.add_argument('--no-modify-overlay', '-w', help='Record the overlay in '
+            'the configuration file as if it had been affected, but do not actually touch it.',
+            action='store_false', dest='createoverlay')
+        p.add_argument('-x', '--output', help='Treat configuration file as empty and '
+            'output any modified configuration data to the specified file, or, the '
+            'console, if not specified.', action='store', dest='output')
+        p.add_argument('-i', '--interactive', help='Interactive mode: pause and allow '
+            'user to override settings before acting', action='store_true', dest='runinteractively')
+        p.add_argument('-c', '--crappy-terminal', help='Don\'t let ncurses make aggressive '
+            'deductions about the functionality of the terminal -- assume it barely works '
+            'for 7-bit ascii type stuff and that\'s it.', action='store_true',
+            dest='crappyterminal')
+        p.add_argument('-f', '--force', help=''.join(( 'Force creation of overlay even when',
+            ' an unclean (i.e.: non-%(prog)s-generated) or non-overlay (i.e.: a regular file)',
+            ' exists at the specified location' )), action='store_true', dest='force')
+
+        overlayusage = self.output.white(''.join(( p.prog, ' overlay' )))
+
+        psubs = p.add_subparsers()
+        op = psubs.add_parser('overlay', prog=overlayusage,
+            help='Create, destroy and manipulate kernel-ng overlays')
+
+        overlaycreateusage = ''.join((overlayusage, ' ', self.output.white('create')))
+
+        opsubs = op.add_subparsers()
+
+        opc = opsubs.add_parser('create', prog=overlaycreateusage,
+            help='Create a new kernel-ng overlay from scratch')
+        opc.add_argument('-p', '--path', help='Filesystem path where the overlay is to be '
+            'created.  If not specified, %s/usr/local/portage/ng-kernels will be used by '
+            'default, or, if set, the path specified in the configuration file.' % EPREFIX,
+            nargs=2, default=SUPPRESS, dest='path')
+        opc.add_argument('-o', '--overwrite', help='Overwrite any already existing overlay',
+            action='store_true', dest='ovloverwrite')
+        opc.add_argument('-u', '--uid', help='UID of file owner of new overlay content',
+            action='store', dest='ovluid', default=SUPPRESS)
+        opc.add_argument('-g', '--gid', help='GID of group owner of new ovelay content',
+            action='store', dest='ovlgid', default=SUPPRESS)
+        opc.add_argument('-U', '--user', help='User-name of file-owner of new overlay content',
+            action='store', dest='ovlusername', default=SUPPRESS)
+        opc.add_argument('-G', '--group', help='Name of group-owner of new overlay content',
+            action='store', dest='ovlgroupname', default=SUPPRESS)
+        opc.add_argument('--no-group-write', help='Provision the new overlay with permissions '
+            'matching \'chmod g-w\'.', action='store_false', dest='ovlgroupwritable')
+        # implies 'no-group-write'
+        opc.add_argument('--no-group-read', help='Provision the new overlay with permissions '
+            'matching \'chmod og-r\'.  This implicitly activates the --no-group-write '
+            'option as well.', action='store_false', dest='ovlgroupreadable')
+
+        overlaydestroyusage = ''.join((overlayusage, ' ', self.output.white('destroy')))
+        opd = opsubs.add_parser('destroy', prog=overlaydestroyusage,
+            help='Destory an existing overlay')
 
 #        group = p.add_option_group("Main modes")
 #        group.add_option(
