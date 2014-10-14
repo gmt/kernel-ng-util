@@ -107,7 +107,9 @@ class LookMaNoSources(object):
 
     @property
     def progname(self):
-        sys.argv[0].split(os.path.sep)[:-1]
+        if sys.argv is None:
+            return 'PROGRAM'
+        return sys.argv[0].split(os.path.sep)[-1]
 
     def _parse_args(self, argv, config_path):
         """
@@ -117,42 +119,17 @@ class LookMaNoSources(object):
         The descriptions, grouping, and possibly the amount sanity checking
         need some finishing touches.
         """
-        progusage = self.output.white(r"%(prog)s")
-        usage = ''.join(( progusage,
-            " [", self.output.white("-h"), "|", self.output.white("--help"),
-            "] [", self.output.white("-V"), "|", self.output.white("--version"),
-            "] [<", self.output.blue("sub-command"),
-            "> [<", self.output.blue("sub-command-option"), "> ...]]" ))
         p = ArgumentParser(prog=self.progname,
-            usage=usage,
-            description='A utility to maintain site-specific overlays of kernel-ng-based ebuilds.')
-
-        p.add_argument( '--version', '-V',
-            action='version',
+            description='A utility to maintain a site-specific overlay containing '
+            'customized kernel-ng-based ebuilds.')
+        p.add_argument( '--version', '-V', action='version',
             version='Look, Ma!  No sources!  Version: %s' % version)
-        p.add_argument('-n', '--name', help='Name of the new overlay to be created.  '
-            'If not provided, the global default name "kernel-ng" will be used.', action='store',
-            dest='name')
-        p.add_argument('-v', '--verbose', help='Verbosely explain what is happening and why.',
-            action='store_true', dest='beverbose')
-        p.add_argument('-q', '--quiet', help='Don\'t bother with informational messages.',
-            action='store_true', dest='bequiet')
-        p.add_argument('--no-save-config', '-1', help='Create the overlay but do not record '
-            'its presence in the active configuration file.', action='store_false',
-            dest='saveconfig')
-        p.add_argument('-p', '--path', help='Filesystem path where the overlay is to be '
-            'found.  If not specified, the overlay path from the configuration file '
-            'will be used, or, if none is configured, the default value of '
-            '%s/usr/local/portage/ng-kernels will be used.' % EPREFIX, nargs=2,
-            default=SUPPRESS, dest='path')
         p.add_argument('--no-modify-overlay', '-w', help='Record the overlay in '
             'the configuration file as if it had been affected, but do not actually touch it.',
             action='store_false', dest='createoverlay')
         p.add_argument('-x', '--output', help='Treat configuration file as empty and '
             'output any modified configuration data to the specified file, or, the '
             'console, if not specified.', action='store', dest='output')
-        p.add_argument('-i', '--interactive', help='Interactive mode: pause and allow '
-            'user to override settings before acting', action='store_true', dest='runinteractively')
         p.add_argument('-c', '--crappy-terminal', help='Don\'t let ncurses make aggressive '
             'deductions about the functionality of the terminal -- assume it barely works '
             'for 7-bit ascii type stuff and that\'s it.', action='store_true',
@@ -161,23 +138,40 @@ class LookMaNoSources(object):
             ' an unclean (i.e.: non-%(prog)s-generated) or non-overlay (i.e.: a regular file)',
             ' exists at the specified location' )), action='store_true', dest='force')
 
-        overlayusage = self.output.white(''.join(( p.prog, ' overlay' )))
+        psubs = p.add_subparsers(title='sub-commands', description='For sub-command help, '
+            'issue %s <sub-command> -h' % self.progname, metavar='<sub-command>', help='overlay | "bust"')
+        op = psubs.add_parser('overlay', help='Create, destroy and manipulate kernel-ng overlays')
 
-        psubs = p.add_subparsers()
-        op = psubs.add_parser('overlay', prog=overlayusage,
-            help='Create, destroy and manipulate kernel-ng overlays')
+        opsubs = op.add_subparsers(title='overlay sub-commands', description='For sub-command help, '
+            'issue %s overlay <sub-command> -h' % self.progname, metavar='<sub-command>',
+            help='create | destroy')
+        opc = opsubs.add_parser('create', description='Creates an empty kernel-ng overlay '
+            'in the filesystem and installs this overlay into the kernel-ng and portage '
+            'configuration files.', help='Create a new kernel-ng overlay from scratch')
 
-        overlaycreateusage = ''.join((overlayusage, ' ', self.output.white('create')))
+        vg_opc = opc.add_mutually_exclusive_group()
+        vg_opc.add_argument('-v', '--verbose', help='verbosely explain what is happening and why.',
+            action='store', type=int, default=2, dest='verbosity')
+        vg_opc.add_argument('-q', '--quiet', help='Don\'t bother with informational messages.',
+            action='store_const', const=0, dest='verbosity')
 
-        opsubs = op.add_subparsers()
+        opc.add_argument('-i', '--interactive', help='interactive mode: pause and allow '
+            'user to override settings before acting', action='store_true', dest='runinteractively')
 
-        opc = opsubs.add_parser('create', prog=overlaycreateusage,
-            help='Create a new kernel-ng overlay from scratch')
-        opc.add_argument('-p', '--path', help='Filesystem path where the overlay is to be '
-            'created.  If not specified, %s/usr/local/portage/ng-kernels will be used by '
-            'default, or, if set, the path specified in the configuration file.' % EPREFIX,
-            nargs=2, default=SUPPRESS, dest='path')
-        opc.add_argument('-o', '--overwrite', help='Overwrite any already existing overlay',
+        rg_opc = opc.add_mutually_exclusive_group()
+        rg_opc.add_argument('-1', '--no-save-config', help='Create the overlay but do not record '
+            'its presence in the configuration files -- it only sits there on the filesystem.',
+            action='store_false', dest='saveconfig')
+        rg_opc.add_argument('-r', '--replace-overlay-config', help='If an overlay is already '
+            'configured when the user requests a new overlay be created at a new location, '
+            '%(prog)s will normally check whether the old overlay file-tree remains, and refuse '
+            'to proceed if it does.  This argument prevents that check, allowing the user to '
+            'configure kernel-ng to point to the new overlay without removing the old overlay '
+            'files first', action='store_true', dest='replace_overlay_config')
+
+        opc.add_argument('-o', '--overwrite', help='Overwrite any already existing overlay '
+            'that may exist at the specified path.  If what is there does not appear to '
+            'be an overlay, this will fail unless the --force options is used as well.',
             action='store_true', dest='ovloverwrite')
         opc.add_argument('-u', '--uid', help='UID of file owner of new overlay content',
             action='store', dest='ovluid', default=SUPPRESS)
@@ -193,35 +187,42 @@ class LookMaNoSources(object):
         opc.add_argument('--no-group-read', help='Provision the new overlay with permissions '
             'matching \'chmod og-r\'.  This implicitly activates the --no-group-write '
             'option as well.', action='store_false', dest='ovlgroupreadable')
+        opc.add_argument('-p', '--path', help='filesystem path in which to create the overlay.  '
+            'If not specified, the overlay path from the configuration file '
+            'will be used, or, if none is configured, a default value of '
+            '%s/usr/local/portage/ng-kernels will be used.' % EPREFIX, nargs=1,
+            default=SUPPRESS, dest='path')
+        opc.add_argument('name', help='Name of the new overlay to be created.  '
+            'If the name is omitted on the command-line, %(prog)s will try first '
+            'to find the setting from the global configuration file; if no such '
+            'setting is specified, %(prog)s will default to "kernel-ng".',
+            action='store', default=SUPPRESS, metavar='[ NAME ]')
 
-        overlaydestroyusage = ''.join((overlayusage, ' ', self.output.white('destroy')))
-        opd = opsubs.add_parser('destroy', prog=overlaydestroyusage,
-            help='Destory an existing overlay')
+        opd = opsubs.add_parser('destroy', description='Remove a kernel-ng overlay from the '
+            'system.  This may come in handy when migrating away from a kernel-ng '
+            'configuration (i.e, when reverting to gentoo-sources), or when moving the '
+            'kernel-ng overlay around in the filesystem.  Also uninstalls '
+            'the overlay from portage\'s repos.conf configuration file.',
+            help='Remove and uninstall the kernel-ng overlay from the system.')
 
-#        group = p.add_option_group("Main modes")
-#        group.add_option(
-#            "-i", "--interactive", action="store_true", default=False,
-#            help="Interactive Mode, this will present a list "
-#                "to make it possible to select mirrors you wish to use.")
-#
-#        group = p.add_option_group("Other options")
-#        group.add_option(
-#            "-d", "--debug", action="store", type="int", dest="verbosity",
-#            default=1, help="debug mode, pass in the debug level [1-9]")
-#        group.add_option(
-#            "-f", "--file", action="store", default='mirrorselect-test',
-#            help="An alternate file to download for deep testing. "
-#                    "Please choose the file carefully as to not abuse the system "
-#                    "by selecting an overly large size file.  You must also "
-#                    " use the -m, --md5 option.")
-#        group.add_option(
-#            "-o", "--output", action="store_true", default=False,
-#            help="Output Only Mode, this is especially useful "
-#                "when being used during installation, to redirect "
-#                "output to a file other than %s" % config_path)
-#        group.add_option(
-#            "-q", "--quiet", action="store_const", const=0, dest="verbosity",
-#            help="Quiet mode")
+        vg_opd = opd.add_mutually_exclusive_group()
+        vg_opd.add_argument('-v', '--verbose', help='verbosely explain what is happening and why.',
+            action='store', type=int, default=2, dest='verbosity')
+        vg_opd.add_argument('-q', '--quiet', help='Don\'t bother with informational messages.',
+            action='store_const', const=0, dest='verbosity')
+
+        opd.add_argument('-r', '--remove-overlay-config', help='if an overlay is already '
+            'configured its settings are normally retained in the kernel-ng configuration '
+            'files, with the result that subsequently creating a new overlay will default '
+            'to using the same kernel-ng settings by default.  Issuing this command will cause '
+            '%(prog)s to remove the overlay configuration, effectively resetting the entire '
+            'system configuration to a vanilla state.', action='store_true', dest='remove_overlay_config')
+        opd.add_argument('-p', '--path', help='filesystem path of the overlay to destroy.  '
+            'If not specified, the overlay path from the configuration file will be used; '
+            'otherwise, no action will be taken.', nargs=1, default=SUPPRESS, dest='path')
+        opd.add_argument('name', help='The Gentoo repository (aka overlay) name of the overlay to be destroyed.  '
+            'If not provided, either via the configured defaults or the command-line, the global default '
+            'name of \'kernel-ng\' will be assumed.', action='store', default=SUPPRESS, metavar='[ NAME ]')
 
         if len(argv) == 1:
             p.print_help()
@@ -234,7 +235,6 @@ class LookMaNoSources(object):
 
         # return results
         return options
-
 
     def get_available_features(self, options):
         '''Returns a list of features suitable for consideration by a user
