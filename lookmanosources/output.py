@@ -34,8 +34,9 @@ import sys
 import re
 import codecs
 import locale
+import os
 
-from optparse import IndentedHelpFormatter
+from argparse import HelpFormatter
 
 def encoder(text, _encoding_):
     return codecs.encode(text, _encoding_, 'replace')
@@ -129,41 +130,64 @@ class Output(object):
             self.file.write(message)
             self.file.flush()
 
-class ColoredFormatter(IndentedHelpFormatter):
+class ColoredFormatter(HelpFormatter):
     """HelpFormatter with colorful output.
 
     Extends format_option.
     Overrides format_heading.
     """
-    def __init__(self, output):
-        IndentedHelpFormatter.__init__(self)
-        self.output = output
+    def __init__(self, prog, *args, **kwargs):
+        self.output = kwargs.pop('output')
+        self.cfprog = prog.strip()
+        self.progname = kwargs.pop('progname').strip()
+        # if progname starts with self.cfprog, trim the prog off...
+        if self.progname.startswith(self.cfprog):
+            self.progname = self.progname[len(self.cfprog):].strip()
+        super(ColoredFormatter, self).__init__(prog, *args, **kwargs)
+    # def format_heading(self, heading):
+    #     """Return a colorful heading."""
+    #     return "%*s%s:\n" % (self.current_indent, "", self.output.white(heading))
 
-    def format_heading(self, heading):
-        """Return a colorful heading."""
-        return "%*s%s:\n" % (self.current_indent, "", self.output.white(heading))
-
-    def format_option(self, option):
+    def format_help(self):
         """Return colorful formatted help for an option."""
-        option = IndentedHelpFormatter.format_option(self, option)
+        result = super(ColoredFormatter, self).format_help()
         # long options with args
-        option = re.sub(
-            r"--([a-zA-Z]*)=([a-zA-Z]*)",
-            lambda m: "-%s %s" % (self.output.green(m.group(1)),
-                self.output.blue(m.group(2))),
-            option)
-        # short options with args
-        option = re.sub(
-            r"-([a-zA-Z]) ?([0-9A-Z]+)",
-            lambda m: " -" + self.output.green(m.group(1)) + ' ' + \
-                self.output.blue(m.group(2)),
-            option)
-        # options without args
-        option = re.sub(
-            r"-([a-zA-Z\d]+)", lambda m: "-" + self.output.green(m.group(1)),
-            option)
-        return option
+        # result = re.sub(self.progname, lambda m:
+        #     self.output.white(m.group(0)), result)
+        # result = re.sub(self.cfprog, lambda m:
+        #     self.output.white(m.group(0)), result)
+        # result = "XXX%sXXX" % result
+#        result = re.sub(
+#            r"--([a-zA-Z]*)=([a-zA-Z]*)",
+#            lambda m: "-%s %s" % (self.output.green(m.group(1)),
+#                self.output.blue(m.group(2))),
+#            result)
+        # short results with args
+#        result = re.sub(
+#            r"-([a-zA-Z]) ?([0-9A-Z]+)",
+#            lambda m: " -" + self.output.green(m.group(1)) + ' ' + \
+#                self.output.blue(m.group(2)),
+#            result)
+        # results without args
+#        result = re.sub(
+#            r"-([a-zA-Z\d]+)", lambda m: "-" + self.output.green(m.group(1)),
+#            result)
+        return result
 
-    def format_description(self, description):
-        """Do not wrap."""
-        return description + '\n'
+    # def format_description(self, description):
+    #     """Do not wrap."""
+    #     return description + '\n'
+
+def ColoredFormatterWithOutput(output=None, progname=None):
+    if output is None:
+        output=Output()
+    if progname is None:
+        progname = sys.argv[0].split(os.path.sep)[-1]
+    class _OutputColoredFormatter(ColoredFormatter):
+        def __init__(self, *args, **kwargs):
+            if 'output' not in kwargs:
+                kwargs['output'] = output
+            if 'progname' not in kwargs:
+                kwargs['progname'] = progname
+            super(_OutputColoredFormatter, self).__init__(*args, **kwargs)
+    return _OutputColoredFormatter

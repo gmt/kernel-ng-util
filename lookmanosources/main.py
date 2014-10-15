@@ -35,7 +35,7 @@ from __future__ import print_function
 import os
 import sys
 from argparse import ArgumentParser, SUPPRESS
-from lookmanosources.output import Output, ColoredFormatter
+from lookmanosources.output import Output, ColoredFormatterWithOutput
 from lookmanosources.selectors import Interactive
 from lookmanosources.configs import get_kernel_ng_conf_path
 from lookmanosources.version import version
@@ -120,8 +120,9 @@ class LookMaNoSources(object):
         need some finishing touches.
         """
         p = ArgumentParser(prog=self.progname,
+            formatter_class=ColoredFormatterWithOutput(output=self.output, progname=self.progname),
             description='A utility to maintain a site-specific overlay containing '
-            'customized kernel-ng-based ebuilds.')
+                'customized kernel-ng-based ebuilds.')
         p.add_argument( '--version', '-V', action='version',
             version='Look, Ma!  No sources!  Version: %s' % version)
         p.add_argument('--no-modify-overlay', '-w', help='Record the overlay in '
