@@ -54,6 +54,8 @@ except KeyboardInterrupt:
 
 from kernelng.main import KernelNgUtil
 
+import click
+
 @click.command()
 def cli():
     """kernelng script"""
