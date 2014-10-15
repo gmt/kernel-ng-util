@@ -102,7 +102,7 @@ setup(
     url='https://github.com/gmt/kernel-ng-util',
     download_url='https://github.com/gmt/kernel-ng-util/releases/downloads/v%(pv)s/kernel-ng-util-%(pv)s.tar.gz' \
         % {'pv': re.sub(r'-r[[:digit:]]*$', r'', __version__)},
-    packages=['kernelng'],
+    packages=find_packages(),
     #package_data = test_data,
     data_files=(
         (os.path.join(os.sep, EPREFIX.lstrip(os.sep), 'usr/share/man/man8'), ['kernelng.8']),
