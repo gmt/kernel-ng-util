@@ -2,8 +2,8 @@
 #-*- coding:utf-8 -*-
 # vim:ai:sta:et:ts=4:sw=4:sts=4
 
-"""Look, Ma!  No Sources!  v0.x
- Tool for maintaining site-specific overlays of kernel-ng ebuilds.
+"""kernelng 0.x
+ Tool for maintaining customized overlays of kernel-ng.eclass-based ebuilds
 
 Copyright 2005-2014 Gentoo Foundation
 
@@ -52,10 +52,10 @@ except KeyboardInterrupt:
     print()
     sys.exit(1)
 
-from lookmanosources.main import LookMaNoSources
+from kernelng.main import KernelNgUtil
 
 try:
-    LookMaNoSources().main(sys.argv)
+    KernelNgUtil().main(sys.argv)
 except KeyboardInterrupt:
     print("Aborted.")
     sys.exit(130)

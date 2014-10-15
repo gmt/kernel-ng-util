@@ -2,8 +2,8 @@
 #-*- coding:utf-8 -*-
 # vim:ai:sta:et:ts=4:sw=4:sts=4
 
-"""Look, Ma!  No sources! 0.x
- Tool for selecting kernel options.
+"""kernelng 0.x
+ Tool for maintaining customized overlays of kernel-ng.eclass-based ebuilds
 
 Copyright 2005-2014 Gentoo Foundation
 
@@ -35,10 +35,10 @@ from __future__ import print_function
 import os
 import sys
 from argparse import ArgumentParser, SUPPRESS
-from lookmanosources.output import Output, ColoredFormatterWithOutput
-from lookmanosources.selectors import Interactive
-from lookmanosources.configs import get_kernel_ng_conf_path
-from lookmanosources.version import version
+from kernelng.output import Output, ColoredFormatterWithOutput
+from kernelng.selectors import Interactive
+from kernelng.configs import get_kernel_ng_conf_path
+from kernelng.version import version
 
 # eprefix compatibility
 try:
@@ -54,13 +54,13 @@ EPREFIX = ""
 if "GENTOO_PORTAGE_EPREFIX" in EPREFIX:
     EPREFIX = ''
 
-class LookMaNoSources(object):
+class KernelNgUtil(object):
     '''Main operational class'''
 
     def __init__(self, output=None):
-        '''LookMaNoSources class init
+        '''KernelNgUtil class init
 
-        @param output: lookmanosources.output.Ouptut() class instance
+        @param output: kernelng.output.Output() class instance
         or None for the default instance
         '''
         self.output = output or Output()
@@ -124,7 +124,7 @@ class LookMaNoSources(object):
             description='A utility to maintain a site-specific overlay containing '
                 'customized kernel-ng-based ebuilds.')
         p.add_argument( '--version', '-V', action='version',
-            version='Look, Ma!  No sources!  Version: %s' % version)
+            version='kernel-ng-util Version: %s' % version)
         p.add_argument('--no-modify-overlay', '-w', help='Record the overlay in '
             'the configuration file as if it had been affected, but do not actually touch it.',
             action='store_false', dest='createoverlay')
@@ -294,4 +294,4 @@ class LookMaNoSources(object):
                 config_path)
         else:
             self.output.write("No results found. "
-                "Check your settings and re-run look-ma-no-sources.\n")
+                "Check your settings and re-run %s.\n" % self.progname)

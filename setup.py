@@ -27,11 +27,11 @@ if "GENTOO_PORTAGE_EPREFIX" in EPREFIX:
 
 # Python files that need `version = ""` subbed, relative to this dir:
 python_scripts = [os.path.join(cwd, path) for path in (
-    'lookmanosources/version.py',
+    'kernelng/version.py',
 )]
 
 manpage = [os.path.join(cwd, path) for path in (
-    'look-ma-no-sources.8',
+    'kernelng.8',
 )]
 
 class set_version(Command):
@@ -62,7 +62,7 @@ class set_version(Command):
         quote = r'[\'"]{1}'
         python_re = r'(?<=^version = )' + quote + '[^\'"]*' + quote
         sub(python_scripts, python_re)
-        man_re = r'(?<=^.TH "look-ma-no-sources" "8" )' + quote + '[^\'"]*' + quote
+        man_re = r'(?<=^.TH "kernelng" "8" )' + quote + '[^\'"]*' + quote
         sub(manpage, man_re)
 
 def load_test():
@@ -79,7 +79,7 @@ def load_test():
             sys.exit(1)
         class test(distutils_extensions.test):
             description = desc
-            default_test_namespace = 'lookmanosources.test'
+            default_test_namespace = 'kernelng.test'
     else:
         class test(Command):
             description = desc
@@ -87,29 +87,35 @@ def load_test():
     return test
 
 test_data = {
-    'look-ma-no-sources': [
+    'kernelng': [
     ]
 }
 
 setup(
-    name='look-ma-no-sources',
+    name='kernelng',
     version=__version__,
     description='Tool for maintaining site-specific Gentoo overlays of customized kernel-ng ebuilds.',
     author='Gregory M. Turner',
     author_email='gmt@be-evil.net',
     maintainer='Gregory M. Turner',
     maintainer_email='gmt@be-evil.net',
-    url='https://github.com/gmt/look-ma-no-sources',
-    download_url='https://github.com/gmt/look-ma-no-sources/releases/downloads/v%(pv)s/look-ma-no-sources-%(pv)s.tar.gz' \
+    url='https://github.com/gmt/kernel-ng-util',
+    download_url='https://github.com/gmt/kernel-ng-util/releases/downloads/v%(pv)s/kernel-ng-util-%(pv)s.tar.gz' \
         % {'pv': re.sub(r'-r[[:digit:]]*$', r'', __version__)},
-    packages=['lookmanosources'],
+    packages=['kernelng'],
     #package_data = test_data,
-    scripts=(['bin/look-ma-no-sources']),
     data_files=(
-        (os.path.join(os.sep, EPREFIX.lstrip(os.sep), 'usr/share/man/man8'), ['look-ma-no-sources.8']),
+        (os.path.join(os.sep, EPREFIX.lstrip(os.sep), 'usr/share/man/man8'), ['kernelng.8']),
     ),
     cmdclass={
         'test': load_test(),
         'set_version': set_version,
     },
+    install_requires=[
+        'Click'
+    ],
+    entry_points='''
+        [console_scripts]
+        kernelng=kernelng.scripts.kernelng:cli
+    ''',
 )

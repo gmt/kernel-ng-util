@@ -1,4 +1,4 @@
-look-ma-no-sources
-==================
+kernel-ng-util
+==============
 
 A utility to construct and maintain site-specific kernel package overlays

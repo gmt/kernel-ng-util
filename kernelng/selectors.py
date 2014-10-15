@@ -2,8 +2,8 @@
 #-*- coding:utf-8 -*-
 # vim:ai:sta:et:ts=4:sw=4:sts=4
 
-"""Look, Ma!  No sources! 0.x
- Tool for selecting kernel options.
+"""kernelng 0.x
+ Tool for maintaining customized overlays of kernel-ng.eclass-based ebuilds
 
 Copyright 2005-2014 Gentoo Foundation
 
@@ -35,7 +35,7 @@ import sys
 import hashlib
 import subprocess
 
-from lookmanosources.output import encoder, get_encoding, decode_selection
+from kernelng.output import encoder, get_encoding, decode_selection
 
 class Interactive(object):
     """Handles interactive features selection."""

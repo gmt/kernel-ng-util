@@ -1,0 +1,94 @@
+.TH "kernelng" "8" "0.1.0"
+
+.SH "NAME"
+.LP
+kernelng \- A tool to create and manage overlays of ebuilds based on kernel-ng.eclass
+
+.SH "SYNTAX"
+.LP
+kernelng [options] [sub-command [sub-command options] ]
+
+.SH "OPTIONS"
+.TP
+.B \-h, \-\-help
+Print a usage summary and exit.
+.TP
+.B \-\-version
+Show program's version number and exit.
+.SS "Main modes"
+.TP
+.B \-f, \-\-foo
+This will jack shit up and make it all snazzy and
+shit.  You know.
+.TP
+.B \-b, \-\-bar
+Sometimes you need a drink and you don't wanna make it yourself.
+In bar mode, kernelng will provide you a comfortable seat and
+make your drinks for you for a moderate fee.
+.TP
+.BI \-R " REGION " "\fR,\fP \-\-region " REGION "
+Only use mirrors from the specified region.
+NOTE: Names with a space must be quoted.
+    eg.:  -R 'North America'
+.SS "Other options"
+.TP
+.BI \-b " BLOCKSIZE " "\fR,\fP \-\-blocksize" " BLOCKSIZE "
+This is to be used in automatic mode and will split the hosts into blocks of
+BLOCKSIZE for use with netselect. This is required for certain routers which
+block 40+ requests at any given time.
+Recommended parameters to pass are: -s 3 -b 10
+.TP
+.B \-o, \-\-output
+Output Only Mode, this is especially useful when being used during installation,
+to redirect output to a file other than /etc/portage/make.conf.
+.TP
+.B \-q, \-\-quiet
+Quiet mode.
+
+.SH "EXAMPLES"
+automatic:
+.LP
+.RS 8
+Autoselect the 5 best mirrors and save results in /etc/portage/make.conf,
+a backup will be created.
+.LP
+# mirrorselect -s5
+.LP
+Autoselect the 3 best mirrors, use a
+.I BLOCKSIZE
+of 10 and append the output to /etc/portage/make.conf.
+.LP
+# mirrorselect -s3 -b10 -o >> /etc/portage/make.conf
+.LP
+Autoselect the 4 best mirrors, it also loads a 100k file from each mirror.
+The result will be written to /etc/portage/make.conf, a backup will be created.
+.LP
+# mirrorselect -D -s4
+.LP
+.RE
+interactive:
+.LP
+.RS 8
+Start mirrorselect in interactive mode to select rsync mirrors.
+.LP
+# mirrorselect -i -r
+.RE
+
+.SH "AUTHORS"
+.LP
+Colin Kingsley <tercel@gentoo.org>
+.LP
+Zac Medico <zmedico@gentoo.org>
+.LP
+Sebastian Pipping <sebastian@pipping.org>
+.LP
+Christian Ruppert <idl0r@gentoo.org>
+.LP
+Brian Dolbec <dolsen@gentoo.org>
+.LP
+Douglas Freed <dwfreed@mtu.edu>
+.LP
+Gregory Turner <gmt@be-evil.net>
+
+.SH "BUGS"
+Please report any bugs to https://github.com/gmt/kernel-ng-util/issues
