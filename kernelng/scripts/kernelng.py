@@ -68,8 +68,8 @@ if EPREFIX == "@GENTOO_%s_EPREFIX@" % "PORTAGE":
 
 import click
 
-class KernelNgUtil(Object):
-    def main():
+class KernelNgUtil(object):
+    def main(self):
         click.echo("Hello nerd.")
         return 0
 
