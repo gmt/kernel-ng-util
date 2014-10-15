@@ -68,14 +68,19 @@ if EPREFIX == "@GENTOO_%s_EPREFIX@" % "PORTAGE":
 
 import click
 
+class KernelNgUtil(Object):
+    def main():
+        click.echo("Hello nerd.")
+        return 0
+
 @click.command()
 def cli():
     """kernelng script"""
     try:
-        KernelNgUtil().main(sys.argv)
+        return KernelNgUtil().main()
     except KeyboardInterrupt:
-        print("Aborted.")
-        sys.exit(130)
+        click.echo("Aborted.")
+        return(130)
 
 if __name__ == '__main__':
     cli()
