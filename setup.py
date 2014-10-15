@@ -22,7 +22,7 @@ cwd = os.getcwd()
 EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
 
 # check and set it if it wasn't
-if "GENTOO_PORTAGE_EPREFIX" in EPREFIX:
+if EPREFIX == "GENTOO_%s_EPREFIX" % "PORTAGE":
     EPREFIX = ''
 
 # Python files that need `version = ""` subbed, relative to this dir:
@@ -44,7 +44,13 @@ class set_version(Command):
     def finalize_options (self):
         pass
     def run(self):
-        ver = 'git' if __version__ == '9999' else __version__
+        if __version__ == '9999':
+            if 'EGIT_VERSION' in os.environ:
+                ver = 'git-%s' % os.environ['EGIT_VERSION'][0:12]
+            else:
+                ver = 'git'
+        else:
+            ver = __version__
         print("Setting version to %s" % ver)
 
         def sub(files, pattern):
@@ -65,32 +71,32 @@ class set_version(Command):
         man_re = r'(?<=^.TH "kernelng" "8" )' + quote + '[^\'"]*' + quote
         sub(manpage, man_re)
 
-def load_test():
-    """Only return the real test class if it's actually being run so that we
-    don't depend on snakeoil just to install."""
-
-    desc = "run the test suite"
-    if 'test' in sys.argv[1:]:
-        try:
-            from snakeoil import distutils_extensions
-        except ImportError:
-            sys.stderr.write("Error: We depend on dev-python/snakeoil ")
-            sys.stderr.write("to run tests.\n")
-            sys.exit(1)
-        class test(distutils_extensions.test):
-            description = desc
-            default_test_namespace = 'kernelng.test'
-    else:
-        class test(Command):
-            description = desc
-
-    return test
-
-test_data = {
-    'kernelng': [
-    ]
-}
-
+# def load_test():
+#     """Only return the real test class if it's actually being run so that we
+#     don't depend on snakeoil just to install."""
+# 
+#     desc = "run the test suite"
+#     if 'test' in sys.argv[1:]:
+#         try:
+#             from snakeoil import distutils_extensions
+#         except ImportError:
+#             sys.stderr.write("Error: We depend on dev-python/snakeoil ")
+#             sys.stderr.write("to run tests.\n")
+#             sys.exit(1)
+#         class test(distutils_extensions.test):
+#             description = desc
+#             default_test_namespace = 'kernelng.test'
+#     else:
+#         class test(Command):
+#             description = desc
+#
+#     return test
+#
+# test_data = {
+#     'kernelng': [
+#     ]
+# }
+#
 setup(
     name='kernelng',
     version=__version__,
@@ -103,12 +109,12 @@ setup(
     download_url='https://github.com/gmt/kernel-ng-util/releases/downloads/v%(pv)s/kernel-ng-util-%(pv)s.tar.gz' \
         % {'pv': re.sub(r'-r[[:digit:]]*$', r'', __version__)},
     packages=find_packages(),
-    #package_data = test_data,
+    include_package_data=True,
     data_files=(
         (os.path.join(os.sep, EPREFIX.lstrip(os.sep), 'usr/share/man/man8'), ['kernelng.8']),
     ),
     cmdclass={
-        'test': load_test(),
+        # 'test': load_test(),
         'set_version': set_version,
     },
     install_requires=[

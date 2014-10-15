@@ -52,7 +52,19 @@ except KeyboardInterrupt:
     print()
     sys.exit(1)
 
-from kernelng.main import KernelNgUtil
+# eprefix compatibility
+try:
+    from portage.const import rootuid
+except ImportError:
+    rootuid = 0
+
+# establish the eprefix, initially set so eprefixify can
+# set it on install
+EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
+
+# check and set it if it wasn't
+if EPREFIX == "@GENTOO_%s_EPREFIX@" % "PORTAGE":
+    EPREFIX = ''
 
 import click
 

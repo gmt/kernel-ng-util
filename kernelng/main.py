@@ -48,7 +48,7 @@ except ImportError:
 
 # establish the eprefix, initially set so eprefixify can
 # set it on install
-EPREFIX = ""
+EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
 
 # check and set it if it wasn't
 if "GENTOO_PORTAGE_EPREFIX" in EPREFIX:
