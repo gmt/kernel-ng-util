@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import re
 import sys
-from setuptools import setup, Command
+from setuptools import setup, Command, find_packages
 from distutils import log
 
 import os
