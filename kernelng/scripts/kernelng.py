@@ -54,10 +54,14 @@ except KeyboardInterrupt:
 
 from kernelng.main import KernelNgUtil
 
-try:
-    KernelNgUtil().main(sys.argv)
-except KeyboardInterrupt:
-    print("Aborted.")
-    sys.exit(130)
-sys.exit(0)
+@click.command()
+def cli():
+    """kernelng script"""
+    try:
+        KernelNgUtil().main(sys.argv)
+    except KeyboardInterrupt:
+        print("Aborted.")
+        sys.exit(130)
 
+if __name__ == '__main__':
+    cli()
