@@ -22,7 +22,7 @@ cwd = os.getcwd()
 EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
 
 # check and set it if it wasn't
-if EPREFIX == "GENTOO_%s_EPREFIX" % "PORTAGE":
+if EPREFIX == "@GENTOO_%s_EPREFIX@" % "PORTAGE":
     EPREFIX = ''
 
 # Python files that need `version = ""` subbed, relative to this dir:
