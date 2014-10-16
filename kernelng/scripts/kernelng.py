@@ -33,6 +33,11 @@ Distributed under the terms of the GNU General Public License v2
 from __future__ import print_function
 
 import sys
+import os
+import re
+
+import click
+from kernelng.kngclick import kngcommand, knggroup
 
 # This block ensures that ^C interrupts are handled quietly.
 try:
@@ -41,46 +46,105 @@ try:
     def exithandler(signum,frame):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
-        print('Caught signal %s. Exiting' % signum)
+        click.echo('Caught signal %s. Exiting' % signum)
         sys.exit(1)
 
     signal.signal(signal.SIGINT, exithandler)
     signal.signal(signal.SIGTERM, exithandler)
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-except KeyboardInterrupt:
-    print()
-    sys.exit(1)
-
-# eprefix compatibility
-try:
-    from portage.const import rootuid
-except ImportError:
-    rootuid = 0
-
-# establish the eprefix, initially set so eprefixify can
-# set it on install
-EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
-
-# check and set it if it wasn't
-if EPREFIX == "@GENTOO_%s_EPREFIX@" % "PORTAGE":
-    EPREFIX = ''
-
-import click
-
-class KernelNgUtil(object):
-    def main(self):
-        click.echo("Hello nerd.")
-        return 0
-
-@click.command()
-def cli():
-    """kernelng script"""
+    # eprefix compatibility
     try:
-        return KernelNgUtil().main()
-    except KeyboardInterrupt:
-        click.echo("Aborted.")
-        return(130)
+        from portage.const import rootuid
+    except ImportError:
+        rootuid = 0
 
-if __name__ == '__main__':
-    cli()
+    # establish the eprefix, initially set so eprefixify can
+    # set it on install
+    EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
+
+    # check and set it if it wasn't
+    if EPREFIX == "@GENTOO_%s_EPREFIX@" % "PORTAGE":
+        EPREFIX = ''
+
+    PROGNAME = sys.argv[0].split(os.path.sep)[-1] if len(sys.argv) >= 1 else 'kernelng'
+
+    HS_RE = re.compile('%\([^)]*\)[^\W\d_]', re.UNICODE)
+    HS = {
+        'prog': click.style(PROGNAME, fg='white', bold=True),
+        'eprefix': EPREFIX,
+    }
+    def hs(text):
+        return text % HS if re.search(HS_RE, text) else text
+
+    CONTEXT_SETTINGS = dict(
+        help_option_names = ['-h', '--help']
+    )
+
+    @knggroup(
+        PROGNAME,
+        context_settings=CONTEXT_SETTINGS,
+        # subcommand_metavar=click.style(click.core.SUBCOMMAND_METAVAR, fg='white', bold=True),
+        help = hs(
+            """
+            Utility to manage site-specific overlay of
+            customized kernel packages.
+
+            A minimal workflow could be as follows:
+
+            \b
+              $ sudo %(prog)s config -i
+              $ sudo %(prog)s overlay create
+              $ sudo %(prog)s ebuild create ng
+              $ sudo emerge -u @world
+            """
+        )
+    )
+    def cli():
+        pass
+
+    @cli.knggroup(
+        # subcommand_metavar=click.style(click.core.SUBCOMMAND_METAVAR, fg='white', bold=True),
+        help = hs(
+            """
+            Manage the %(prog)s overlay
+            """
+        )
+    )
+    def overlay():
+        pass
+
+    @overlay.kngcommand(
+        help = hs(
+            """
+            Create and activate an empty %(prog)s overlay
+            """
+        )
+    )
+    def create():
+        pass
+
+    @overlay.kngcommand(
+        help = hs(
+            """
+            Deactivate or remove the %(prog)s overlay
+            """
+        )
+    )
+    def destroy():
+        pass
+
+    @cli.knggroup(
+        help = hs(
+            """Modify the %(prog)s defaults"""
+        )
+    )
+    def config():
+        pass
+
+    if __name__ == '__main__':
+        cli()
+
+except KeyboardInterrupt:
+    click.echo('Exited due to keyboard interrupt')
+    sys.exit(130)
