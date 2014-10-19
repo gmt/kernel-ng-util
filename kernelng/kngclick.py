@@ -149,6 +149,21 @@ class KNGHelpFormatter(HelpFormatter):
                              subsequent_indent=indent))
         self.write('\n')
 
+    def write_dl(self, rows, *args, **kwargs):
+        newrows = []
+        for row in rows:
+            if len(row) != 2:
+                raise TypeError('Expected two columns for definition list')
+            newrows.append((
+                ','.join((
+                    ' '.join((
+                        style(spacesepstr, fg='white', bold=True) for spacesepstr in commasepstr.split(' ')
+                    )) for commasepstr in row[0].split(',')
+                )),
+                row[1]
+            ))
+        super(KNGHelpFormatter, self).write_dl(newrows, *args, **kwargs)
+
 class KNGContext(Context):
     def make_formatter(self):
         return KNGHelpFormatter(width=self.terminal_width)
