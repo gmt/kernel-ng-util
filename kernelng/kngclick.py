@@ -39,28 +39,28 @@ from .kngtextwrapper import kngterm_len, kngexpandtabs
 
 KNG_OPTIONS_METAVAR = ''.join((
     style('[', fg='blue'),
-    style('OPTIONS', fg='magenta', bold=True),
+    style('OPTIONS', fg='cyan', bold=True),
     style(']', fg='blue')))
 
 SUBCOMMAND_METAVAR = ''.join((
-    style('COMMAND', fg='magenta', bold=True),
+    style('COMMAND', fg='cyan', bold=True),
     ' ',
     style('[', fg='blue'),
-    style('ARGS', fg='magenta', bold=True),
+    style('ARGS', fg='cyan', bold=True),
     style(']...', fg='blue')))
 
 SUBCOMMANDS_METAVAR = ''.join((
-    style('COMMAND1', fg='magenta', bold=True),
+    style('COMMAND1', fg='cyan', bold=True),
     ' ',
     style('[', fg='blue'),
-    style('ARGS', fg='magenta', bold=True),
+    style('ARGS', fg='cyan', bold=True),
     style(']...', fg='blue'),
     ' ',
     style('[', fg='blue'),
-    style('COMMAND2', fg='magenta', bold=True),
+    style('COMMAND2', fg='cyan', bold=True),
     ' ',
     style('[', fg='blue'),
-    style('ARGS', fg='magenta', bold=True),
+    style('ARGS', fg='cyan', bold=True),
     style(']...', fg='blue'),
     style(']...', fg='blue')))
 
