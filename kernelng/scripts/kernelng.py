@@ -68,10 +68,12 @@ try:
         EPREFIX = ''
 
     PROGNAME = sys.argv[0].split(os.path.sep)[-1] if len(sys.argv) >= 1 else 'kernelng'
+    PROGDESC = 'kernel-ng-util'
 
     HS_RE = re.compile('%\([^)]*\)[^\W\d_]', re.UNICODE)
     HS = {
         'prog': click.style(PROGNAME, fg='white', bold=True),
+        'progdesc': PROGDESC,
         'eprefix': EPREFIX,
     }
     def hs(text):
@@ -107,7 +109,7 @@ try:
         # subcommand_metavar=click.style(click.core.SUBCOMMAND_METAVAR, fg='white', bold=True),
         help = hs(
             """
-            Manage the %(prog)s overlay
+            Manage the %(progdesc)s overlay
             """
         )
     )
@@ -117,7 +119,7 @@ try:
     @overlay.kngcommand(
         help = hs(
             """
-            Create and activate an empty %(prog)s overlay
+            Create and activate an empty %(progdesc)s overlay
             """
         )
     )
@@ -127,7 +129,7 @@ try:
     @overlay.kngcommand(
         help = hs(
             """
-            Deactivate or remove the %(prog)s overlay
+            Deactivate or remove the %(progdesc)s overlay
             """
         )
     )
@@ -136,7 +138,7 @@ try:
 
     @cli.knggroup(
         help = hs(
-            """Modify the %(prog)s defaults"""
+            """Modify the %(progdesc)s configuration"""
         )
     )
     def config():
