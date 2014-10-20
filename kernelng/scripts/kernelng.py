@@ -86,7 +86,6 @@ try:
     @knggroup(
         PROGNAME,
         context_settings=CONTEXT_SETTINGS,
-        # subcommand_metavar=click.style(click.core.SUBCOMMAND_METAVAR, fg='white', bold=True),
         help = hs(
             """
             A utility to manage a site-specific overlay containing
@@ -107,7 +106,6 @@ try:
         pass
 
     @cli.knggroup(
-        # subcommand_metavar=click.style(click.core.SUBCOMMAND_METAVAR, fg='white', bold=True),
         help = hs(
             """
             Manage the %(progdesc)s overlay
