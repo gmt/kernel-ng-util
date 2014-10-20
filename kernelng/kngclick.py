@@ -30,7 +30,7 @@ Feel free to treat everything in this file under the terms of that
 from __future__ import print_function
 
 from click.core import Context, Command, Group
-from click.termui import style
+from click.termui import style, get_terminal_size
 from click.formatting import HelpFormatter
 from click.decorators import command
 
@@ -128,6 +128,16 @@ def kngwrap_text(text, width=78, initial_indent='', subsequent_indent='',
 
 
 class KNGHelpFormatter(HelpFormatter):
+    # allow a maximum default width of 120 vs. HelpFormatter's 80
+    def __init__(self, *args, **kwargs):
+        if 'width' in kwargs:
+            width = kwargs.pop('width')
+        else:
+            width = None
+        width = max(min(get_terminal_size()[0], 120) - 2, 50) if width is None else width
+        kwargs['width'] = width
+        super(KNGHelpFormatter, self).__init__(*args, **kwargs)
+
     def write_usage(self, prog, args='', prefix='Usage: '):
         """Writes a usage line into the buffer.
 
