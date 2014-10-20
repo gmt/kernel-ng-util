@@ -129,10 +129,12 @@ try:
             """
         )
     )
+    # <boilerplate to effect option-ordering independence>
     @click.version_option(None, '-V', '--version')
     @click.option('-C', '--no-color', is_flag=True, callback=no_color,
         default=False, is_eager=True, expose_value=False, help = hs(
             "Do not colorize output or use advanced terminal features"))
+    # </boilerplate>
     def cli():
         pass
 
@@ -143,6 +145,12 @@ try:
             """
         )
     )
+    # <boilerplate to effect option-ordering independence>
+    @click.version_option(None, '-V', '--version')
+    @click.option('-C', '--no-color', is_flag=True, callback=no_color,
+        default=False, is_eager=True, expose_value=False, help = hs(
+            "Do not colorize output or use advanced terminal features"))
+    # </boilerplate>
     def overlay():
         pass
 
@@ -153,6 +161,12 @@ try:
             """
         )
     )
+    # <boilerplate to effect option-ordering independence>
+    @click.version_option(None, '-V', '--version')
+    @click.option('-C', '--no-color', is_flag=True, callback=no_color,
+        default=False, is_eager=True, expose_value=False, help = hs(
+            "Do not colorize output or use advanced terminal features"))
+    # </boilerplate>
     def create():
         pass
 
@@ -163,6 +177,12 @@ try:
             """
         )
     )
+    # <boilerplate to effect option-ordering independence>
+    @click.version_option(None, '-V', '--version')
+    @click.option('-C', '--no-color', is_flag=True, callback=no_color,
+        default=False, is_eager=True, expose_value=False, help = hs(
+            "Do not colorize output or use advanced terminal features"))
+    # </boilerplate>
     def destroy():
         pass
 
@@ -171,6 +191,12 @@ try:
             """Modify the %(progdesc)s configuration"""
         )
     )
+    # <boilerplate to effect option-ordering independence>
+    @click.version_option(None, '-V', '--version')
+    @click.option('-C', '--no-color', is_flag=True, callback=no_color,
+        default=False, is_eager=True, expose_value=False, help = hs(
+            "Do not colorize output or use advanced terminal features"))
+    # </boilerplate>
     def config():
         pass
 
