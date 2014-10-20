@@ -83,6 +83,34 @@ try:
         help_option_names = ['-h', '--help']
     )
 
+    no_color_mode = False
+
+    # generate a new echo function suitable for monkey patching an old one
+    def nocolorecho(oldecho):
+        def newecho(*args, **kwargs):
+            if no_color_mode:
+                if len(args) > 0:
+                    args=(click._compat.strip_ansi(args[0]),) + args[1:]
+                else:
+                    message = kwargs.pop('message', None)
+                    if message is not None:
+                        kwargs['message'] = click._compat.strip_ansi(message)
+            oldecho(*args, **kwargs)
+        return newecho
+
+    # monkey patch click's echo functions to always ignore color, regardless
+    # of the output's isatty-ness when no_color_mode is True -- but only
+    # bother if no_color_mode is, indeed, true, and we haven't already
+    # monkey patched it.
+    def no_color(ctx, command, value):
+        global no_color_mode
+        oldval = no_color_mode
+        no_color_mode = no_color_mode or value
+        if (not oldval) and no_color_mode:
+            click.utils.__dict__['echo'] = nocolorecho(click.utils.echo)
+            click.core.__dict__['echo'] = nocolorecho(click.core.echo)
+            click.__dict__['echo'] = nocolorecho(click.echo)
+
     @knggroup(
         PROGNAME,
         context_settings=CONTEXT_SETTINGS,
@@ -102,6 +130,9 @@ try:
         )
     )
     @click.version_option(None, '-V', '--version')
+    @click.option('-C', '--no-color', is_flag=True, callback=no_color,
+        default=False, is_eager=True, expose_value=False, help = hs(
+            "Do not colorize output or use advanced terminal features"))
     def cli():
         pass
 
