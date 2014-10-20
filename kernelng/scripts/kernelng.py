@@ -89,8 +89,8 @@ try:
         # subcommand_metavar=click.style(click.core.SUBCOMMAND_METAVAR, fg='white', bold=True),
         help = hs(
             """
-            Utility to manage site-specific overlay of
-            customized kernel packages.
+            A utility to manage a site-specific overlay containing
+            customized %(progdesc)s packages.
 
             A minimal workflow could be as follows:
 
