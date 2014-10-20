@@ -102,6 +102,7 @@ try:
             """
         )
     )
+    @click.version_option(None, '-V', '--version')
     def cli():
         pass
 
