@@ -32,7 +32,8 @@ from __future__ import print_function
 from click.core import Context, Command, Group
 from click.termui import style, get_terminal_size
 from click.formatting import HelpFormatter
-from click.decorators import command
+from click.decorators import command, option, version_option
+import click
 
 from .kngclicktextwrapper import KNGClickTextWrapper
 from .kngtextwrapper import kngterm_len, kngexpandtabs
@@ -63,6 +64,8 @@ SUBCOMMANDS_METAVAR = ''.join((
     style('ARGS', fg='cyan', bold=True),
     style(']...', fg='blue'),
     style(']...', fg='blue')))
+
+NOCOLORIZEHELP = "Do not colorize output or use advanced terminal features"
 
 def kngwrap_text(text, width=78, initial_indent='', subsequent_indent='',
               preserve_paragraphs=False):
@@ -178,6 +181,34 @@ class KNGContext(Context):
     def make_formatter(self):
         return KNGHelpFormatter(width=self.terminal_width)
 
+no_color_mode = False
+
+# generate a new echo function suitable for monkey patching an old one
+def nocolorecho(oldecho):
+    def newecho(*args, **kwargs):
+        if no_color_mode:
+            if len(args) > 0:
+                args=(click._compat.strip_ansi(args[0]),) + args[1:]
+            else:
+                message = kwargs.pop('message', None)
+                if message is not None:
+                    kwargs['message'] = click._compat.strip_ansi(message)
+        oldecho(*args, **kwargs)
+    return newecho
+
+# monkey patch click's echo functions to always ignore color, regardless
+# of the output's isatty-ness when no_color_mode is True -- but only
+# bother if no_color_mode is, indeed, true, and we haven't already
+# monkey patched it.
+def no_color(ctx, command, value):
+    global no_color_mode
+    oldval = no_color_mode
+    no_color_mode = no_color_mode or value
+    if (not oldval) and no_color_mode:
+        click.utils.__dict__['echo'] = nocolorecho(click.utils.echo)
+        click.core.__dict__['echo'] = nocolorecho(click.core.echo)
+        click.__dict__['echo'] = nocolorecho(click.echo)
+
 class KNGGroup(Group):
     def __init__(self, *args, **kwargs):
         options_metavar = kwargs.pop('options_metavar', KNG_OPTIONS_METAVAR)
@@ -233,11 +264,20 @@ class KNGCommand(Command):
             return cmd
         return decorator
 
-def kngcommand(name=None, **kwargs):
-    kwargs.setdefault('cls', KNGCommand)
-    return command(name, **kwargs)
+def kngcommand(name=None, cls=None, **kwargs):
+    cls = KNGCommand if cls is None else cls
+    def decorator(f):
+        return version_option(None, '-V', '--version')(
+            option('-C', '--no-color', is_flag=True, callback=no_color,
+                default=False, is_eager=True, expose_value=False, help=NOCOLORIZEHELP)(
+                   command(name, cls, **kwargs)(f)))
+    return decorator
 
-def knggroup(name=None, **kwargs):
-    kwargs.setdefault('cls', KNGGroup)
-    return command(name, **kwargs)
-
+def knggroup(name=None, cls=None, **kwargs):
+    cls = KNGGroup if cls is None else cls
+    def decorator(f):
+        return version_option(None, '-V', '--version')(
+            option('-C', '--no-color', is_flag=True, callback=no_color,
+                default=False, is_eager=True, expose_value=False, help=NOCOLORIZEHELP)(
+                   command(name, cls, **kwargs)(f)))
+    return decorator
