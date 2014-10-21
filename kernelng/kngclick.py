@@ -264,8 +264,21 @@ class KNGCommand(Command):
             return cmd
         return decorator
 
-def kngcommand(name=None, cls=None, **kwargs):
-    cls = KNGCommand if cls is None else cls
+
+def kngcommandcommon(name=None, cls=None, **kwargs):
+    '''
+    Invoke the click.command decorator with additional decorations common
+    to all commands and groups in the kernel-ng-utils command-line framework.
+    Routing through this instead of click.command allows users to place the
+    options provided by the additional decorations freely within the kernelng
+    command-line, so, for example, kernelng -C foo bar, kernelng foo -C bar,
+    and kernelng foo bar -C all do the expected thing.  The additional
+    decorations hard-code (along with their implementations) the following
+    options::
+
+      -C, --no-color: suppresses fancy terminal behavior
+      -V, --version: dump version info & terminate
+    '''
     def decorator(f):
         return version_option(None, '-V', '--version')(
             option('-C', '--no-color', is_flag=True, callback=no_color,
@@ -273,11 +286,10 @@ def kngcommand(name=None, cls=None, **kwargs):
                    command(name, cls, **kwargs)(f)))
     return decorator
 
+def kngcommand(name=None, cls=None, **kwargs):
+    cls = KNGCommand if cls is None else cls
+    return kngcommandcommon(name, cls, **kwargs)
+
 def knggroup(name=None, cls=None, **kwargs):
     cls = KNGGroup if cls is None else cls
-    def decorator(f):
-        return version_option(None, '-V', '--version')(
-            option('-C', '--no-color', is_flag=True, callback=no_color,
-                default=False, is_eager=True, expose_value=False, help=NOCOLORIZEHELP)(
-                   command(name, cls, **kwargs)(f)))
-    return decorator
+    return kngcommandcommon(name, cls, **kwargs)
