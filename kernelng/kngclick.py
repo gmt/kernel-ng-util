@@ -146,6 +146,9 @@ class KNGHelpFormatter(HelpFormatter):
         self._kngsection = None
         super(KNGHelpFormatter, self).__init__(*args, **kwargs)
 
+    def stylize_section_name(self, name):
+        return style(name, fg='cyan', bold=True)
+
     @contextmanager
     def section(self, name):
         """Wrap click.HelpFormatter.section() so as to track the
@@ -153,7 +156,7 @@ class KNGHelpFormatter(HelpFormatter):
 
         :param name: the section name to pass to click.HelpFormatter.section()
         """
-        with super(KNGHelpFormatter, self).section(name):
+        with super(KNGHelpFormatter, self).section(self.stylize_section_name(name)):
             oldkngsection = self._kngsection
             self._kngsection = name
             try:
