@@ -29,6 +29,8 @@ Feel free to treat everything in this file under the terms of that
 
 from __future__ import print_function
 
+from contextlib import contextmanager
+
 from click.core import Context, Command, Group
 from click.termui import style, get_terminal_size
 from click.formatting import HelpFormatter
@@ -141,7 +143,24 @@ class KNGHelpFormatter(HelpFormatter):
             width = None
         width = max(min(get_terminal_size()[0], 120) - 2, 50) if width is None else width
         kwargs['width'] = width
+        self._kngsection = None
         super(KNGHelpFormatter, self).__init__(*args, **kwargs)
+
+    @contextmanager
+    def section(self, name):
+        """Wrap click.HelpFormatter.section() so as to track the
+        most recently added section name.
+
+        :param name: the section name to pass to click.HelpFormatter.section()
+        """
+        with super(KNGHelpFormatter, self).section(name):
+            oldkngsection = self._kngsection
+            self._kngsection = name
+            try:
+                print('KNGHelpFormatter.section: %s -> %s' % (oldkngsection, name))
+                yield
+            finally:
+                self._kngsection = oldkngsection
 
     def write_usage(self, prog, args='', prefix='Usage: '):
         prog = style(prog, fg='white', bold=True)
@@ -152,8 +171,14 @@ class KNGHelpFormatter(HelpFormatter):
             return word
         elif word[:1] == '-':
             return style(word, fg='white', bold=True)
-        else:
+        elif self._kngsection == 'Options':
+            # for the options definiton list, we make non-hyphenated
+            # words yellow; otherwise, we stick to white
+            print('dl_style_word: %s(%s)' % (self._kngsection, word))
             return style(word, fg='yellow', bold=True)
+        else:
+            print('dl_style_word: %s(%s)' % (self._kngsection, word))
+            return style(word, fg='white', bold=True)
 
     def write_dl(self, rows, *args, **kwargs):
         newrows = []
