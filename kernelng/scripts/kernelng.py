@@ -69,12 +69,19 @@ try:
 
     PROGNAME = sys.argv[0].split(os.path.sep)[-1] if len(sys.argv) >= 1 else 'kernelng'
     PROGDESC = 'kernel-ng-util'
-
+    FRAMEWORK = 'kernel-ng'
+    SUBCMDHELP = 'For detailed help with subcommands, issue the sub-command' \
+        ' followed by the %(helpshort)s or %(helplong)s option.' % {
+            'helpshort': click.style('-h', fg='white', bold=True),
+            'helplong': click.style('--help', fg='white', bold=True),
+        }
     HS_RE = re.compile('%\([^)]*\)[^\W\d_]', re.UNICODE)
     HS = {
         'prog': click.style(PROGNAME, fg='white', bold=True),
         'progdesc': PROGDESC,
+        'framework': FRAMEWORK,
         'eprefix': EPREFIX,
+        'subcmdhelp': SUBCMDHELP,
     }
     def hs(text):
         return text % HS if re.search(HS_RE, text) else text
@@ -98,6 +105,8 @@ try:
               $ sudo %(prog)s overlay create
               $ sudo %(prog)s ebuild create ng
               $ sudo emerge -u @world
+
+            %(subcmdhelp)s
             """
         )
     )
