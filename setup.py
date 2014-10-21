@@ -119,7 +119,8 @@ setup(
         'set_version': set_version,
     },
     install_requires=[
-        'Click'
+        'Click',
+        'portage'
     ],
     entry_points='''
         [console_scripts]

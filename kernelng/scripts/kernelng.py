@@ -39,6 +39,8 @@ import re
 import click
 from kernelng.kngclick import kngcommand, knggroup
 
+import portage
+
 # This block ensures that ^C interrupts are handled quietly.
 try:
     import signal
@@ -90,6 +92,10 @@ try:
         help_option_names = ['-h', '--help']
     )
 
+    # python3 wigs out if these are proxies
+    portage_uid = int(portage.data.portage_uid)
+    portage_gid = int(portage.data.portage_gid)
+
     @knggroup(
         PROGNAME,
         context_settings=CONTEXT_SETTINGS,
@@ -134,6 +140,10 @@ try:
         ),
         short_help = hs("Create and activate an empty %(progdesc)s overlay.")
     )
+    @click.option('-u', '--uid', type=click.INT, default=portage_uid,
+        help='Numeric user id to assign to overlay files.')
+    @click.option('-g', '--gid', type=click.INT, default=portage_gid,
+        help='Numeric group id to assign to overlay files.')
     def create():
         pass
 
