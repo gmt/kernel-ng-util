@@ -157,7 +157,6 @@ class KNGHelpFormatter(HelpFormatter):
             oldkngsection = self._kngsection
             self._kngsection = name
             try:
-                print('KNGHelpFormatter.section: %s -> %s' % (oldkngsection, name))
                 yield
             finally:
                 self._kngsection = oldkngsection
@@ -174,10 +173,8 @@ class KNGHelpFormatter(HelpFormatter):
         elif self._kngsection == 'Options':
             # for the options definiton list, we make non-hyphenated
             # words yellow; otherwise, we stick to white
-            print('dl_style_word: %s(%s)' % (self._kngsection, word))
             return style(word, fg='yellow', bold=True)
         else:
-            print('dl_style_word: %s(%s)' % (self._kngsection, word))
             return style(word, fg='white', bold=True)
 
     def write_dl(self, rows, *args, **kwargs):
