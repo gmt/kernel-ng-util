@@ -147,6 +147,14 @@ class KNGHelpFormatter(HelpFormatter):
         prog = style(prog, fg='white', bold=True)
         super(KNGHelpFormatter, self).write_usage(prog, args=args, prefix=prefix)
 
+    def dl_style_word(self, word):
+        if len(word) == 0:
+            return word
+        elif word[:1] == '-':
+            return style(word, fg='white', bold=True)
+        else:
+            return style(word, fg='yellow', bold=True)
+
     def write_dl(self, rows, *args, **kwargs):
         newrows = []
         for row in rows:
@@ -155,7 +163,7 @@ class KNGHelpFormatter(HelpFormatter):
             newrows.append((
                 ','.join((
                     ' '.join((
-                        style(spacesepstr, fg='white', bold=True) for spacesepstr in commasepstr.split(' ')
+                        self.dl_style_word(spacesepstr) for spacesepstr in commasepstr.split(' ')
                     )) for commasepstr in row[0].split(',')
                 )),
                 row[1]
