@@ -146,8 +146,18 @@ class KNGHelpFormatter(HelpFormatter):
         self._kngsection = None
         super(KNGHelpFormatter, self).__init__(*args, **kwargs)
 
-    def stylize_section_name(self, name):
-        return style(name, fg='cyan', bold=True)
+    def write_heading(self, heading):
+        """
+        Writes a heading into the buffer, applying some styling if the heading
+        matches the current section name.
+        """
+        if self._kngsection is not None and heading == self._kngsection:
+            if heading == 'Commands':
+                heading = 'Command'
+            self.write('%*s%s%s\n' % (self.current_indent, '',
+                style(heading, fg='cyan', bold=True), style(':', fg='white', bold=True)))
+        else:
+            super(KNGHelpFormatter, self).write_heading(heading)
 
     @contextmanager
     def section(self, name):
@@ -156,13 +166,13 @@ class KNGHelpFormatter(HelpFormatter):
 
         :param name: the section name to pass to click.HelpFormatter.section()
         """
-        with super(KNGHelpFormatter, self).section(self.stylize_section_name(name)):
-            oldkngsection = self._kngsection
+        oldkngsection = self._kngsection
+        try:
             self._kngsection = name
-            try:
+            with super(KNGHelpFormatter, self).section(name):
                 yield
-            finally:
-                self._kngsection = oldkngsection
+        finally:
+            self._kngsection = oldkngsection
 
     def write_usage(self, prog, args='', prefix='Usage: '):
         prog = style(prog, fg='white', bold=True)
