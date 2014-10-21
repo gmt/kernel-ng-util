@@ -106,8 +106,9 @@ setup(
     maintainer='Gregory M. Turner',
     maintainer_email='gmt@be-evil.net',
     url='https://github.com/gmt/kernel-ng-util',
-    download_url='https://github.com/gmt/kernel-ng-util/releases/downloads/v%(pv)s/kernel-ng-util-%(pv)s.tar.gz' \
-        % {'pv': re.sub(r'-r[[:digit:]]*$', r'', __version__)},
+    download_url='https://github.com/gmt/kernel-ng-overlay/archive/master.tar.gz' if __version__ == 9999 \
+        else 'https://github.com/gmt/kernel-ng-util/releases/downloads/v%(pv)s/kernel-ng-util-%(pv)s.tar.gz' \
+           % {'pv': re.sub(r'-r[[:digit:]]*$', r'', __version__)},
     packages=find_packages(),
     include_package_data=True,
     data_files=(
