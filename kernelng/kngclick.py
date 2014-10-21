@@ -37,6 +37,7 @@ import click
 
 from .kngclicktextwrapper import KNGClickTextWrapper
 from .kngtextwrapper import kngterm_len, kngexpandtabs
+from .version import version
 
 KNG_OPTIONS_METAVAR = ''.join((
     style('[', fg='blue'),
@@ -280,7 +281,7 @@ def kngcommandcommon(name=None, cls=None, **kwargs):
       -V, --version: dump version info & terminate
     '''
     def decorator(f):
-        return version_option(None, '-V', '--version')(
+        return version_option(version, '-V', '--version')(
             option('-C', '--no-color', is_flag=True, callback=no_color,
                 default=False, is_eager=True, expose_value=False, help=NOCOLORIZEHELP)(
                    command(name, cls, **kwargs)(f)))
