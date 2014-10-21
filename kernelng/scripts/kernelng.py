@@ -95,10 +95,11 @@ try:
         context_settings=CONTEXT_SETTINGS,
         help = hs(
             """
-            A utility to manage a site-specific overlay containing
-            customized %(progdesc)s packages.
-
-            A minimal workflow could be as follows:
+            %(progdesc)s provides the %(prog)s command to manage
+            a site-specific overlay containing customized %(framework)s
+            packages.  The following example sequence
+            of commands could be used to configure and deploy
+            a %(framework)s package from scratch:
 
             \b
               $ sudo %(prog)s config -i
