@@ -66,7 +66,7 @@ SUBCOMMANDS_METAVAR = ''.join((
     style(']...', fg='blue'),
     style(']...', fg='blue')))
 
-NOCOLORIZEHELP = "Do not colorize output or use advanced terminal features"
+NOCOLORIZEHELP = "Do not colorize output or use advanced terminal features."
 
 def kngwrap_text(text, width=78, initial_indent='', subsequent_indent='',
               preserve_paragraphs=False):

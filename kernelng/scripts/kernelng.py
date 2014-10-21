@@ -117,7 +117,9 @@ try:
     @cli.knggroup(
         help = hs(
             """
-            Manage the %(progdesc)s overlay
+            Manage the %(progdesc)s overlay.
+
+            %(subcmdhelp)s
             """
         )
     )
@@ -127,9 +129,10 @@ try:
     @overlay.kngcommand(
         help = hs(
             """
-            Create and activate an empty %(progdesc)s overlay
+            Creates and activates an empty %(progdesc)s overlay.
             """
-        )
+        ),
+        short_help = hs("Create and activate an empty %(progdesc)s overlay.")
     )
     def create():
         pass
@@ -137,16 +140,21 @@ try:
     @overlay.kngcommand(
         help = hs(
             """
-            Deactivate or remove the %(progdesc)s overlay
+            Deactivates and/or removes the %(progdesc)s overlay.
             """
-        )
+        ),
+        short_help = hs("Deactivate or remove %(progdesc)s overlay.")
     )
     def destroy():
         pass
 
     @cli.knggroup(
         help = hs(
-            """Modify the %(progdesc)s configuration"""
+            """
+            Modify the %(progdesc)s configuration.
+
+            %(subcmdhelp)s
+            """
         )
     )
     def config():
