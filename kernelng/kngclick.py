@@ -130,6 +130,7 @@ def kngwrap_text(text, width=78, initial_indent='', subsequent_indent='',
 
     return '\n\n'.join(rv)
 
+click.formatting.__dict__['wrap_text'] = kngwrap_text
 
 class KNGHelpFormatter(HelpFormatter):
     # allow a maximum default width of 120 vs. HelpFormatter's 80
@@ -143,25 +144,8 @@ class KNGHelpFormatter(HelpFormatter):
         super(KNGHelpFormatter, self).__init__(*args, **kwargs)
 
     def write_usage(self, prog, args='', prefix='Usage: '):
-        """Writes a usage line into the buffer.
-
-        :param prog: the program name.
-        :param args: whitespace separated list of arguments.
-        :param prefix: the prefix for the first line.
-        """
         prog = style(prog, fg='white', bold=True)
-
-        prefix = '%*s%s' % (self.current_indent, prefix, prog)
-        self.write(prefix)
-
-        ptl = kngterm_len(prefix)
-        text_width = max(self.width - self.current_indent - ptl, 10)
-        indent = ' ' * (ptl + 1)
-
-        self.write(kngwrap_text(args, text_width,
-                             initial_indent=' ',
-                             subsequent_indent=indent))
-        self.write('\n')
+        super(KNGHelpFormatter, self).write_usage(prog, args=args, prefix=prefix)
 
     def write_dl(self, rows, *args, **kwargs):
         newrows = []
