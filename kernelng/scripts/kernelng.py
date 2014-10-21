@@ -37,7 +37,7 @@ import os
 import re
 
 import click
-from kernelng.kngclick import kngcommand, knggroup
+from kernelng.kngclick import kngcommand, knggroup, OCTAL_3
 
 import portage
 
@@ -144,8 +144,10 @@ try:
         help='Numeric user id to assign to overlay files.')
     @click.option('-g', '--gid', type=click.INT, default=portage_gid,
         help='Numeric group id to assign to overlay files.')
-    def create():
-        pass
+    @click.option('-p', '--perm', type=OCTAL_3, default=0o664,
+        help='Three-digit octal permissions to assign to overlay files.')
+    def create(uid, gid, perm):
+        click.echo('uid=%d gid=%d perm=0%o' % (uid, gid, perm))
 
     @overlay.kngcommand(
         help = hs(

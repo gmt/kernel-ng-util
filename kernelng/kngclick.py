@@ -311,3 +311,26 @@ def kngcommand(name=None, cls=None, **kwargs):
 def knggroup(name=None, cls=None, **kwargs):
     cls = KNGGroup if cls is None else cls
     return kngcommandcommon(name, cls, **kwargs)
+
+class Octal_3ParamType(click.ParamType):
+    name = 'octal_3'
+    def convert(self, value, param, ctx):
+        origvalue = value
+        try:
+            if not isinstance(value, int):
+                value = value.strip()
+                while value[:1] == '0':
+                    value = value[1:]
+                if len(value) > 3:
+                    self.fail('"%s" is not a valid 3-digit octal value' % origvalue, param, ctx)
+                value = int('0%s' % value, 8)
+            if not isinstance(value, int):
+                self.fail('"%s" is not a valid 3-digit octal value' % origvalue, param, ctx)
+            if 0 <= value and value <= 0o777:
+                return value
+            else:
+                self.fail('0%o is outside the allowed range 0-0%o' % (value, 0o777), param, ctx)
+        except ValueError:
+            self.fail('%s is not a valid 3-digit octal value' % value, param, ctx)
+
+OCTAL_3 = Octal_3ParamType()
