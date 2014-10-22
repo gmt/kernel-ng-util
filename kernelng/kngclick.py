@@ -15,8 +15,8 @@ Copyright 2005-2014 Gentoo Foundation
         Copyright (C) 2014 by Armin Ronacher
         Copyright (C) 2014 Gregory M. Turner <gmt@be-evil.net>
 
-Due to interface limitations, portions of this code had to
- be cut-pasted from Armin Ronacher's click framework, which, for now, has
+FIXME: Due to interface limitations, portions of this code are
+ cut-pasted from Armin Ronacher's click framework, which has
  a more liberal license than that of kernel-ng-util.  Armin's code
  is BSD licensed: see https://github.com/mitsuhiko/click/blob/master/LICENSE
  for the gory details.
