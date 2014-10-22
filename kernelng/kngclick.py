@@ -40,6 +40,7 @@ import click
 from .kngclicktextwrapper import KNGClickTextWrapper
 from .kngtextwrapper import kngterm_len, kngexpandtabs
 from .version import version
+from .output import set_verbose_level
 
 KNG_OPTIONS_METAVAR = ''.join((
     style('[', fg='blue'),
@@ -67,8 +68,6 @@ SUBCOMMANDS_METAVAR = ''.join((
     style('ARGS', fg='cyan', bold=True),
     style(']...', fg='blue'),
     style(']...', fg='blue')))
-
-NOCOLORIZEHELP = "Do not colorize output or use advanced terminal features."
 
 def kngwrap_text(text, width=78, initial_indent='', subsequent_indent='',
               preserve_paragraphs=False):
@@ -292,6 +291,10 @@ class KNGCommand(Command):
             return cmd
         return decorator
 
+NOCOLORIZEHELP = "Do not colorize output or use advanced terminal features."
+QUIETHELP = "Skip non-essential outputs and error messages (mostly for robots)."
+VERBOSEHELP = "Include optional progress and informational output suitable for humans."
+DEBUGHELP = "Provide counterproductively detailed output (mostly for developers)."
 
 def kngcommandcommon(name=None, cls=None, **kwargs):
     '''
@@ -304,14 +307,23 @@ def kngcommandcommon(name=None, cls=None, **kwargs):
     decorations hard-code (along with their implementations) the following
     options::
 
+      -v, --verbose: report progress in detail (verboseness=2)
+      -q, --quiet: avoid nonessential ouput (verboseness=0)
+      --debug: dump silly amounts of information (verboseness=3)
       -C, --no-color: suppresses fancy terminal behavior
       -V, --version: dump version info & terminate
     '''
     def decorator(f):
-        return version_option(version, '-V', '--version')(
-            option('-C', '--no-color', is_flag=True, callback=no_color,
-                default=False, is_eager=True, expose_value=False, help=NOCOLORIZEHELP)(
-                   command(name, cls, **kwargs)(f)))
+        return command(name, cls, **kwargs)(
+          option('-v', '--verbose', 'verbosity', expose_value=False, flag_value=2,
+                 help=VERBOSEHELP, callback=set_verbose_level)(
+            option('-q', '--quiet', 'verbosity', expose_value=False, flag_value=0,
+                   help=QUIETHELP, callback=set_verbose_level)(
+              option('--debug', 'verbosity', expose_value=False, flag_value=3,
+                     help=DEBUGHELP, callback=set_verbose_level)(
+                option('-C', '--no-color', is_flag=True, default=False, is_eager=True,
+                       help=NOCOLORIZEHELP, expose_value=False, callback=no_color)(
+                  version_option(version, '-V', '--version')(f))))))
     return decorator
 
 def kngcommand(name=None, cls=None, **kwargs):

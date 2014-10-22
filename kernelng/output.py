@@ -68,6 +68,19 @@ def get_encoding(output):
             encoding = 'utf_8'
         return encoding
 
+verbose_level = 1
+VERBOSE_REVERSE={0: '--quiet', 1: '(default)', 2: '--verbose', 3: '--debug'}
+
+def set_verbose_level(ctx, option, value):
+    global verbose_level
+    if value is None:
+        return
+    if value != 1 and verbose_level != 1 and value != verbose_level:
+        ctx.fail('Conflicting verbose options %s and %s specified simultaneously.' % 
+            (VERBOSE_REVERSE[verbose_level], VERBOSE_REVERSE[value]))
+    else:
+        verbose_level = value
+
 class Output(object):
     """Handles text output. Only prints messages with level <= verbosity.
     Therefore, verbosity=2 is everything (debug), and verbosity=0 is urgent
