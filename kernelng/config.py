@@ -173,6 +173,33 @@ class KNGConfigItem(object):
                 self._reason = 'stored'
         self._value = value
 
+    def __eq__(self, other):
+        if isinstance(other, KNGConfigItem):
+            if other.key != self.key:
+                return False
+            if other.value != self.value:
+                return False
+            if other.reason != self.reason:
+                return False
+            return True
+        else:
+            # fuck it
+            return NotImplemented
+    def __ne__(self, other):
+        return not (self == other)
+    def __gt__(self, other):
+        if isinstance(other, KNGConfigItem):
+            return self.key > other.key or (self.key == other.key and self.value > other.value) \
+                or (self.key == other.key and self.value == other.value and self.reason > other.reason)
+        else:
+            return NotImplemented
+    def __le__(self, other):
+        return not self.__gt__(other)
+    def __lt__(self, other):
+        return (not self.__eq__(other)) and self.__le__(other)
+    def __ge__(self, other):
+        return self.__eq__(other) or self.__gt__(other)
+
 kng_example_config_data = None
 def KNGExampleConfigData():
     global kng_example_config_data
@@ -274,28 +301,125 @@ def KNGGlobalDefaults():
     }
     kng_global_defaults = result.copy()
     return result
-    
-class KNGConfig(object):
+
+class KNGConfigItems(list):
+    '''
+    Implements a list of KNGConfigItem instances with some dict-like interfaces
+    for, i.e., determining whether a particular configuration key is already in
+    the list, or setting the key in-place via __getitem__.  For dict-like behaviors,
+    the comments are ignored.
+    '''
+    def __contains__(self, key):
+        if key == '__comment__':
+            for item in self:
+                if item.iscomment:
+                    return True
+            return False
+        elif instanceof(key, KNGConfigItem):
+            for item in self:
+                if item == key:
+                    return True
+            return False
+        else:
+            for item in self:
+                if item.iscomment and item.comment == key:
+                    return True
+                elif item.iscomment:
+                    continue
+                if item.key == key:
+                    return True
+            return False
+    def iterkeypairs(self):
+        return ( (item.key, item.value) for item in self if not item.iscomment )
+    def iterkeys(self):
+        return ( item[0] for item in self.iterkeypairs() )
+    def itervalues(self):
+        return ( item[1] for item in self.iterkeypairs() )
+    def iterstored(self):
+        return ( item for item in self if item.reason == 'stored' )
+    def __getitem__(self, index):
+        if isinstance(index, slice) or isinstance(index, int):
+            return super(KNGConfigItems, self).__getitem__(index)
+        for item in self:
+            if (not item.iscomment) and item.key == index:
+                return item
+        raise KeyError(index)
+    def __setitem__(self, index, value):
+        if isinstance(index, slice) or isinstance(index, int):
+            super(KNGConfigItems, self).__setitem__(index, value)
+            return
+        for itemindex, item in enumerate(self):
+            if (not item.iscomment) and item.key == index:
+                if isinstance(value, KNGConfigItem):
+                    self[itemindex] = value
+                    return
+                else:
+                    item.value = value
+                    return
+        if isinstance(value, KNGConfigItem):
+            self.append(value)
+        else:
+            self.append(KNGConfigItem(index, value))
+    def __delitem__(self, index):
+        if isinstance(index, slice) or isinstance(index, int):
+            super(KNGConfigItems, self).__delitem__(index)
+        else:
+            for itemindex, item in enumerate(self):
+                if (not item.iscomment) and item.key == index:
+                    super(KNGConfigItems, self).__delitem__(itemindex)
+                    return
+            raise IndexError('Could not find item matching index "%s" in %s to delete' % (index, self))
+    def insert(self, index, value):
+        if isinstance(index, int):
+            super(KNGConfigItems, self).insert(index, value)
+        else:
+            for itemindex, item in enumerate(self):
+                if (not item.iscomment) and item.key == index:
+                    super(KNGConfigItems, self).insert(itemindex, value)
+                    return
+            raise IndexError('Could not find item matching insertion index "%s" in %s' % (index, self))
+    def append(self, value):
+        for itemindex, item in enumerate(self):
+            if (not item.iscomment) and item.key == value.key:
+                del(self[itemindex])
+        super(KNGConfigItems, self).append(value)
+    def extend(self, values):
+        for v in values:
+            self.append(v)
+    def pop(self, index=-1):
+        v = self[index]
+        del self[index]
+        return v
+    def remove(self, value):
+        for itemindex, item in enumerate(self):
+            if item == value:
+                del self[itemindex]
+                return
+        raise ValueError('%s not in list' % value)
+    def __iadd__(self, values):
+        self.extend(values)
+        return self
+
+class KNGConfig(OrderedDict):
     def __init__(self, kernelng_conf_file=KERNELNG_CONF_FILE, repos_conf_file=REPOS_CONF_FILE):
         self._kernelng_conf_file = kernelng_conf_file
         self._repos_conf_file = repos_conf_file
-        # a list of KNGConfigItems
-        self._items = OrderedDict()
+        super(KNGConfig, self).__init__()
 
     def loadExampleConfig(self):
-        self._items.clear()
+        self.clear()
         ecd = KNGExampleConfigData()
         for key in ecd.keys():
-            self._items[key] = []
+            self[key] = KNGConfigItems()
             val = ecd[key]
             for item in val:
                 if isinstance(item, tuple):
                     if len(item) > 2 and item[2] == True:
-                        self._items[key].append(KNGConfigItem(item[0], item[1], reason='stored'))
+                        self[key].append(KNGConfigItem(item[0], item[1], reason='stored'))
                     else:
-                        self._items[key].append(KNGConfigItem(item[0], item[1], default=item[1], reason='default'))
+                        self[key].append(KNGConfigItem(item[0], item[1], default=item[1], reason='default'))
                 else:
-                    self._items[key].append(KNGConfigItem(item))
+                    self[key].append(KNGConfigItem(item))
 
     def writeConfigText(self, file=None):
         '''
@@ -304,14 +428,26 @@ class KNGConfig(object):
         :param file: If provided, the output will be written into the provided click.File object.
                      If not provided, output will go to standard output.
         '''
-        keys = self._items.keys()
+        keys = self.keys()
         for key in keys:
             if key != 'implicit_global':
                 click.echo('[%s]' % key, file=file)
-            vlist = self._items[key]
+            vlist = self[key]
             if vlist:
                 for item in vlist:
                     if item.iscomment:
                         click.echo(item.comment)
                     elif item.isexplicit:
                        click.echo('%(itemkey)s = %(itemvalue)s' % { 'itemkey': item.key, 'itemvalue': item.value }, file=file)
+
+    def section(self, name):
+        """
+        Returns the named section if it exists, or, if not, creates an empty KNGConfigItems
+        instance, attaches it to this KNGConfig as the 'name' section, and returns it.
+        """
+        if name in self:
+            return self['name']
+        else:
+            v = KNGConfigItems()
+            self['name'] = v
+            return v
