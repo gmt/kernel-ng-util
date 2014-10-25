@@ -41,6 +41,9 @@ from kernelng.kngclick import kngcommand, knggroup, OCTAL_3
 
 import portage
 
+from ..config import EPREFIX, portage_uid, portage_gid, PROGNAME, PROGDESC, \
+    FRAMEWORK, SUBCONSTS, subconsts
+
 # This block ensures that ^C interrupts are handled quietly.
 try:
     import signal
@@ -55,46 +58,28 @@ try:
     signal.signal(signal.SIGTERM, exithandler)
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-    # eprefix compatibility
-    try:
-        from portage.const import rootuid
-    except ImportError:
-        rootuid = 0
+    # augment the general substitution constants dict with command-line
+    # specific constants
 
-    # establish the eprefix, initially set so eprefixify can
-    # set it on install
-    EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
-
-    # check and set it if it wasn't
-    if EPREFIX == "@GENTOO_%s_EPREFIX@" % "PORTAGE":
-        EPREFIX = ''
-
-    PROGNAME = sys.argv[0].split(os.path.sep)[-1] if len(sys.argv) >= 1 else 'kernelng'
-    PROGDESC = 'kernel-ng-util'
-    FRAMEWORK = 'kernel-ng'
-    SUBCMDHELP = 'For detailed help with subcommands, issue the sub-command' \
+    HS = SUBCONSTS.copy()
+    HELPSHORT = '-h'
+    HELPLONG = '--help'
+    SUBCMDHELP = 'For detailed help with subcommands, issue the subcommand' \
         ' followed by the %(helpshort)s or %(helplong)s option.' % {
-            'helpshort': click.style('-h', fg='white', bold=True),
-            'helplong': click.style('--help', fg='white', bold=True),
+            'helpshort': click.style(HELPSHORT, fg='white', bold=True),
+            'helplong': click.style(HELPLONG, fg='white', bold=True),
         }
-    HS_RE = re.compile('%\([^)]*\)[^\W\d_]', re.UNICODE)
-    HS = {
-        'prog': click.style(PROGNAME, fg='white', bold=True),
-        'progdesc': PROGDESC,
-        'framework': FRAMEWORK,
-        'eprefix': EPREFIX,
-        'subcmdhelp': SUBCMDHELP,
-    }
-    def hs(text):
-        return text % HS if re.search(HS_RE, text) else text
+    HS['progname'] = click.style(PROGNAME, fg='white', bold=True)
+    HS['helpshort'] = HELPSHORT
+    HS['helplong'] = HELPLONG
+    HS['subcmdhelp'] = SUBCMDHELP
+
+    def hs(value):
+        return subconsts(value, subconsts=HS)
 
     CONTEXT_SETTINGS = dict(
-        help_option_names = ['-h', '--help']
+        help_option_names = [HELPSHORT, HELPLONG]
     )
-
-    # python3 wigs out if these are proxies
-    portage_uid = int(portage.data.portage_uid)
-    portage_gid = int(portage.data.portage_gid)
 
     @knggroup(
         PROGNAME,
@@ -171,6 +156,34 @@ try:
     )
     def config():
         pass
+
+    @config.knggroup(
+        help = hs(
+            """
+            Display %(framework)s actual or default configuration info.
+            """
+        ),
+    )
+    def show():
+        pass
+
+    @config.kngcommand(
+        help = hs(
+            """
+            Display the hard-coded example %(framework)s configuration file which shipped with this version of %(progname)s.
+            """
+        )
+    )
+    @click.option('-o', '--output-to', type=click.File('w'), help='Write output to file instead of standard output.')
+    @click.option('-a', '--append-to', type=click.File('a'), help='Append output to end of file.')
+    def example(output_to=None, append_to=None):
+        if output_to is not None and append_to is not None:
+            raise click.UsageError('Cannot supply -o/--output-to and -a/--append-to arguments simultaneously.')
+        outfile = output_to if output_to else append_to
+        from ..config import KNGConfig
+        conf = KNGConfig()
+        conf.loadExampleConfig()
+        conf.writeConfigText(file=outfile)
 
     if __name__ == '__main__':
         cli()
