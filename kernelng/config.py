@@ -149,7 +149,7 @@ class KNGConfigItem(object):
         if self.reason == 'default':
             return False
         elif self.reason == 'override':
-            # ?
+            # FIXME: This result suggests "isexplicit" is the wrong name for this.
             return False
         else:
             return True
