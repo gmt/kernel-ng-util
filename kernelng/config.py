@@ -451,3 +451,10 @@ class KNGConfig(OrderedDict):
             v = KNGConfigItems()
             self['name'] = v
             return v
+
+    def get_section(self, name):
+        """
+        Returns the named section if it exists, or, if no section by the given
+        name is to be found, raises KeyError.
+        """
+        return self['name']
