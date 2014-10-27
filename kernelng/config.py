@@ -150,6 +150,11 @@ class KNGConfigItem(object):
     @property
     def reason(self):
         return self._reason
+    @reason.setter
+    def reason(self, value):
+        ValidateKNGConfigItemReason(self.key, self.value, value)
+        self._reason = value
+
     @property
     def isexplicit(self):
         if self.reason == 'default':
