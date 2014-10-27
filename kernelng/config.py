@@ -228,7 +228,6 @@ def KNGExampleConfigData():
         '# are ignored.  Quotation marks are not needed and will not be',
         '# preserved by the %(prog)s utility -- their use is discouraged.',
         '#',
-        '#',
         '# A "[global]" section is also supported.  Any "<name> = <value>"',
         '# pairs appearing before any section header are considered',
         '# implicitly to be in the global section, so the "[global]" header',
