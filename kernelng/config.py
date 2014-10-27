@@ -234,6 +234,9 @@ def KNGExampleConfigData():
         '# implicitly to be in the global section, so the "[global]" header',
         '# may be omitted, so long as all global settings come first.',
         '',
+    )
+    result['global'] = (
+        '',
         '# overlay',
         '# -------',
         '# default value: site-%(framework)s',
