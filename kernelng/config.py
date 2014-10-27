@@ -129,10 +129,6 @@ class KNGConfigItem(object):
         elif reason == 'default' and default is not None and value != default:
             raise KNGConfigItemUnknownReason(key, value, 'bad_default')
         else:
-            # note that we never rely on KNGGlobalDefaults in KNGConfigItem instances.
-            # Those defaults are only used for 'global' settings but KNGConfigItem
-            # instances are completely agnostic as to what section they might appear
-            # in (or even that there is such a thing as a section in the first place).
             self._default = default
 
     def __repr__(self):
