@@ -449,7 +449,7 @@ class KNGConfig(OrderedDict):
                     if item.iscomment:
                         click.echo(item.comment)
                     elif item.isexplicit:
-                       click.echo('%(itemkey)s = %(itemvalue)s' % { 'itemkey': item.key, 'itemvalue': item.value }, file=file)
+                        click.echo('%(itemkey)s = %(itemvalue)s' % { 'itemkey': item.key, 'itemvalue': item.value }, file=file)
 
     def section(self, name):
         """
