@@ -307,7 +307,6 @@ def KNGExampleConfigData():
         '# repos_conf',
         '# ==========',
         '# default value: %(eprefix)s/etc/portage/repos.conf',
-
         '# scope: global only',
         '#',
         '# Location of portage\'s repos.conf file.  If empty, i.e.:',
