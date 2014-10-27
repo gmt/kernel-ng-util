@@ -94,9 +94,8 @@ def subconsts(text, subconsts=SUBCONSTS):
     """Utility function to make substitutions from a dictionary of constants."""
     try:
         return text % subconsts if re.search(CONST_RE, text) else text
-    except ValueError:
-        if has_verbose_level(1):
-           print('subconsts: error substituting for "%s".', file=sys.stderr)
+    except ValueError as e:
+        echov('subconsts: error substituting: "%s".' % str(e), err=True)
         raise
 
 class KNGConfigItemUnknownReason(Exception):
