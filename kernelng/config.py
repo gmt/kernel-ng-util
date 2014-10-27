@@ -135,6 +135,13 @@ class KNGConfigItem(object):
             # in (or even that there is such a thing as a section in the first place).
             self._default = default
 
+    def __repr__(self):
+        if self.iscomment:
+            return 'KNGConfigItem(%r, reason=%r)' % (self.comment, self.reason)
+        else:
+            return 'KNGConfigItem(%r, %r, default=%r, reason=%r)' % (
+                self.key, self.value, self.default, self.reason)
+
     @property
     def key(self):
         return self._key
