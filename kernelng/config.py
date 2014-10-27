@@ -213,6 +213,8 @@ def KNGExampleConfigData():
 
     result = OrderedDict()
 
+    # format of the innermost key=>val tuples:
+    # ( key, val, [force_stored=False, [no_default=False]] )
     result['implicit_global'] = (
         '# %(framework)s.conf',
         '',
