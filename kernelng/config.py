@@ -493,9 +493,25 @@ class KNGConfig(OrderedDict):
             val = ecd[key]
             for item in val:
                 if isinstance(item, tuple):
-                    if len(item) > 2 and item[2] == True:
+                    if len(item) > 3 and item[3]:
+                        # when item[3] is true (no default), then this config. parameter will
+                        # not appear in KNGGlobalDefaults and therefore stored, no default is the only
+                        # sensible interpretation regardless of item[2] (force-stored).
                         self[key].append(KNGConfigItem(item[0], item[1], reason='stored'))
+                    elif len(item) > 2 and item[2]:
+                        # When item[3] is False (meaning, the config. parameter item[0] does have
+                        # a default value and it's item[1]), but item[2] is true, this amounts to
+                        # saying "item[0] is set to item[1], which happens to be the default value,
+                        # but despite this, please force the config. parameter to appear in the .conf
+                        # file anyhow.  We achieve this miracle like so:
+                        self[key].append(KNGConfigItem(item[0], item[1], default=item[1], reason='stored'))
                     else:
+                        # add a comment item "illustrating" the default value in "pseudo-prose", as, otherwise,
+                        # the KNGConfigItem for the item[0] => item[1] setting would not appear anywhere in the
+                        # example configuration file (because its reason will be 'default', not 'stored')
+                        self[key].append(KNGConfigItem('# %(confkey)s = %(confval)s' % {
+                            'confkey': item[0], 'confval': item[1] }))
+                        # add the KNGConfigItem mapping the config. parameter to its default value
                         self[key].append(KNGConfigItem(item[0], item[1], default=item[1], reason='default'))
                 else:
                     self[key].append(KNGConfigItem(item))
