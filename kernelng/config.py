@@ -139,6 +139,9 @@ class KNGConfigItem(object):
     @property
     def key(self):
         return self._key
+    # value as a name for a property makes for confusing reading, but to
+    # consumers, foo.key and foo.value seem natural enough, and value is
+    # not a reserved word or anything scary in any 2.7+ pythons AFAIK.
     @property
     def value(self):
         return self._value
