@@ -68,7 +68,7 @@ try:
         ' followed by the %(helpshort)s or %(helplong)s option.' % {
             'helpshort': click.style(HELPSHORT, fg='white', bold=True),
             'helplong': click.style(HELPLONG, fg='white', bold=True),
-        }
+    }
     HS['progname'] = click.style(PROGNAME, fg='white', bold=True)
     HS['helpshort'] = HELPSHORT
     HS['helplong'] = HELPLONG
