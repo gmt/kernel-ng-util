@@ -69,10 +69,21 @@ try:
             'helpshort': click.style(HELPSHORT, fg='white', bold=True),
             'helplong': click.style(HELPLONG, fg='white', bold=True),
     }
+    CONFIG_EXAMPLE_OPTIONS = 'One, at most, of the %(o)s/%(output_to)s,' \
+        ' %(a)s/%(append_to)s or %(f)s/%(force)s options may be used' \
+        ' per invocation, as each specifies where the output goes.' % {
+            'o': click.style('-o', fg='white', bold=True),
+            'output_to': click.style('--output-to', fg='white', bold=True),
+            'a': click.style('-a', fg='white', bold=True),
+            'append_to': click.style('--append-to', fg='white', bold=True),
+            'f': click.style('-f', fg='white', bold=True),
+            'force': click.style('--force', fg='white', bold=True),
+    }
     HS['progname'] = click.style(PROGNAME, fg='white', bold=True)
     HS['helpshort'] = HELPSHORT
     HS['helplong'] = HELPLONG
     HS['subcmdhelp'] = SUBCMDHELP
+    HS['config_example_options'] = CONFIG_EXAMPLE_OPTIONS
 
     def hs(value):
         return subconsts(value, subconsts=HS)
@@ -93,7 +104,7 @@ try:
             a %(framework)s package from scratch:
 
             \b
-              $ sudo %(prog)s config -i
+              $ sudo %(prog)s config example --force
               $ sudo %(prog)s overlay create
               $ sudo %(prog)s ebuild create ng
               $ sudo emerge -u @world
@@ -160,9 +171,10 @@ try:
     @config.knggroup(
         help = hs(
             """
-            Display %(framework)s actual or default configuration info.
+            Display %(framework)s actual or default configuration information.
             """
         ),
+        short_help = hs("Display %(framework)s configuration info.")
     )
     def show():
         pass
@@ -171,8 +183,11 @@ try:
         help = hs(
             """
             Display the hard-coded example %(framework)s configuration file which shipped with this version of %(progname)s.
+
+            %(config_example_options)s
             """
-        )
+        ),
+        short_help = hs("Display an example configuration file.")
     )
     @click.option('-o', '--output-to', type=click.File('w'), help='Write output to file instead of standard output.')
     @click.option('-a', '--append-to', type=click.File('a'), help='Append output to end of file.')
