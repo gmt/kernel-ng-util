@@ -703,7 +703,7 @@ class KNGConfig(OrderedDict):
                     click.echo('[%s]' % key, file=file)
                 for item in vlist.iterexplicit():
                     if item.iscomment:
-                        click.echo(item.comment)
+                        click.echo(item.comment, file=file)
                     else:
                         click.echo('%(itemkey)s = %(itemvalue)s' % { 'itemkey': item.key, 'itemvalue': item.value }, file=file)
 
