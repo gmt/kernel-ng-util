@@ -74,12 +74,12 @@ REPOS_CONF_FILE = ''.join((
 
 KERNELNG_CONF = '%s.conf' % FRAMEWORK
 KERNELNG_CONF_DIR = '/etc/%s' % FRAMEWORK
+EKERNELNG_CONF_DIR = '%s%s' % (EPREFIX, KERNELNG_CONF_DIR)
 
 KERNELNG_CONF_FILE = ''.join((
-    EPREFIX,
-    KERNELNG_CONF_DIR,
+    EKERNELNG_CONF_DIR,
     os.path.sep,
-    KERNELNG_CONF
+    KERNELNG_CONF,
 ))
 
 CONST_RE = re.compile('%\([^)]*\)[^\W\d_]', re.UNICODE)
