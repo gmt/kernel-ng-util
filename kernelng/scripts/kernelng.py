@@ -42,7 +42,7 @@ from kernelng.kngclick import kngcommand, knggroup, OCTAL_3
 import portage
 
 from ..config import EPREFIX, portage_uid, portage_gid, PROGNAME, PROGDESC, \
-    FRAMEWORK, SUBCONSTS, subconsts
+    FRAMEWORK, SUBCONSTS, subconsts, EKERNELNG_CONF_DIR, KERNELNG_CONF_FILE
 
 # This block ensures that ^C interrupts are handled quietly.
 try:
@@ -191,14 +191,27 @@ try:
     )
     @click.option('-o', '--output-to', type=click.File('w'), help='Write output to file instead of standard output.')
     @click.option('-a', '--append-to', type=click.File('a'), help='Append output to end of file.')
-    def example(output_to=None, append_to=None):
-        if output_to is not None and append_to is not None:
-            raise click.UsageError('Cannot supply -o/--output-to and -a/--append-to arguments simultaneously.')
-        outfile = output_to if output_to else append_to
-        from ..config import KNGConfig
-        conf = KNGConfig()
-        conf.loadExampleConfig()
-        conf.writeConfigText(file=outfile)
+    @click.option('-f', '--force', is_flag=True, help='Reset global configuration file to contain the example config.')
+    def example(output_to=None, append_to=None, force=False):
+        outfile = None
+        try:
+            if sum([1 if x else 0 for x in [output_to, append_to, force]]) > 1:
+                raise click.UsageError('Cannot supply -o/--output-to, -a/--append-to, or -f/--force arguments simultaneously.')
+            if output_to:
+                outfile = output_to
+            elif append_to:
+                outfile = append_to
+            elif force:
+                if not os.path.exists(KERNELNG_CONF_FILE):
+                    os.makedirs(EKERNELNG_CONF_DIR)
+                outfile = click.open_file(KERNELNG_CONF_FILE, 'w')
+            from ..config import KNGConfig
+            conf = KNGConfig()
+            conf.loadExampleConfig()
+            conf.writeConfigText(file=outfile)
+        finally:
+            if outfile:
+                outfile.close()
 
     if __name__ == '__main__':
         cli()
