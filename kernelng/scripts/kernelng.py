@@ -194,23 +194,23 @@ try:
     @click.option('-f', '--force', is_flag=True, help='Reset global configuration file to contain the example config.')
     def example(output_to=None, append_to=None, force=False):
         outfile = None
+        if sum([1 if x else 0 for x in [output_to, append_to, force]]) > 1:
+            raise click.UsageError('Cannot supply -o/--output-to, -a/--append-to, or -f/--force arguments simultaneously.')
+        if output_to:
+            outfile = output_to
+        elif append_to:
+            outfile = append_to
+        elif force:
+            if not os.path.exists(KERNELNG_CONF_FILE):
+                os.makedirs(EKERNELNG_CONF_DIR)
+            outfile = click.open_file(KERNELNG_CONF_FILE, 'w')
         try:
-            if sum([1 if x else 0 for x in [output_to, append_to, force]]) > 1:
-                raise click.UsageError('Cannot supply -o/--output-to, -a/--append-to, or -f/--force arguments simultaneously.')
-            if output_to:
-                outfile = output_to
-            elif append_to:
-                outfile = append_to
-            elif force:
-                if not os.path.exists(KERNELNG_CONF_FILE):
-                    os.makedirs(EKERNELNG_CONF_DIR)
-                outfile = click.open_file(KERNELNG_CONF_FILE, 'w')
             from ..config import KNGConfig
             conf = KNGConfig()
             conf.loadExampleConfig()
             conf.writeConfigText(file=outfile)
         finally:
-            if outfile:
+            if force:
                 outfile.close()
 
     if __name__ == '__main__':
