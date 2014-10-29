@@ -316,11 +316,11 @@ def kngcommandcommon(name=None, cls=None, **kwargs):
     def decorator(f):
         return command(name, cls, **kwargs)(
           option('-v', '--verbose', 'verbosity', expose_value=False, flag_value=2,
-                 help=VERBOSEHELP, callback=set_verbose_level)(
+                 help=VERBOSEHELP, callback=set_verbose_level, is_eager=True)(
             option('-q', '--quiet', 'verbosity', expose_value=False, flag_value=0,
-                   help=QUIETHELP, callback=set_verbose_level)(
+                   help=QUIETHELP, callback=set_verbose_level, is_eager=True)(
               option('--debug', 'verbosity', expose_value=False, flag_value=3,
-                     help=DEBUGHELP, callback=set_verbose_level)(
+                     help=DEBUGHELP, callback=set_verbose_level, is_eager=True)(
                 option('-C', '--no-color', is_flag=True, default=False, is_eager=True,
                        help=NOCOLORIZEHELP, expose_value=False, callback=no_color)(
                   version_option(version, '-V', '--version')(f))))))
