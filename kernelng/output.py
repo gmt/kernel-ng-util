@@ -37,6 +37,7 @@ import locale
 import os
 
 from argparse import HelpFormatter
+from functools import wraps
 import click
 
 def encoder(text, _encoding_):
@@ -102,3 +103,178 @@ def sechov(text, vl=1, file=None, nl=True, err=None, **styles):
             else:
                 err=False
         click.secho(text, file, nl, err, **styles)
+
+_string_types=None
+
+def _init_stringtypes():
+    strtypes=[ type('') ]
+    try:
+        strtypes.append(basestring)
+    except NameError:
+        pass
+    btype=type(b'')
+    if btype not in strtypes:
+        strtypes.append(btype)
+    try:
+        eval("strtypes.append(type(u''))")
+    except SyntaxError:
+        pass
+
+    global _string_types
+    _string_types = tuple(set(strtypes))
+
+if _string_types is None:
+    _init_stringtypes()
+
+def is_string(thing):
+    return isinstance(thing, _string_types)
+
+class AutoTracer(object):
+    def __init__(self):
+        self._indent = 0
+    def style_fn(self, f, arglist):
+        return ''.join((
+            '  ' * min(self._indent, 20),
+            click.style(f, fg='blue', bold=True),
+            click.style('(', fg='white', bold=True),
+            self._style_arglist(arglist),
+            click.style(')', fg='white', bold=True),
+        ))
+
+    def style_rvfn(self, f, rv):
+        return ''.join((
+            '  ' * max(min(self._indent - 1, 20), 0),
+            click.style(f, fg='blue', bold=True),
+            click.style('()', fg='white', bold=True),
+            ' ',
+            click.style('<--', fg='green', bold=True),
+            ' ',
+            self._style_argval(rv)
+        ))
+    def style_m(self, mi, m, arglist):
+        return ''.join((
+            '  ' * min(self._indent, 20),
+            self._style_obj(mi, m),
+            click.style('.', fg='white', bold=True),
+            click.style(m, fg='blue', bold=True),
+            click.style('(', fg='white', bold=True),
+            self._style_arglist(arglist),
+            click.style(')', fg='white', bold=True),
+        ))
+
+    def style_rvm(self, mi, m, rv):
+        return ''.join((
+            '  ' * max(min(self._indent - 1, 20), 0),
+            self._style_obj(mi, m),
+            click.style('.', fg='white', bold=True),
+            click.style(m, fg='blue', bold=True),
+            click.style('()', fg='white', bold=True),
+            ' ',
+            click.style('<--', fg='green', bold=True),
+            ' ',
+            self._style_argval(rv),
+        ))
+    def _style_obj(self, mi, m):
+        try:
+            if m in ['__repr__', '__str__']:
+                return 'inst:%s' % click.style(mi.__class__.__name__, fg='yellow', bold=True)
+            rv = str(mi)
+            if len(rv) > 15:
+                return 'inst:%s' % click.style(mi.__class__.__name__, fg='yellow', bold=True)
+            else:
+                rv = click.style(rv, fg='yellow', bold=True)
+                return rv
+        except:
+            return 'inst:%s' % click.style(mi.__class__.__name__, fg='yellow', bold=True)
+
+
+    def _style_argval(self, val):
+        try:
+            wuz_string = False
+            if is_string(val):
+                rv=repr(val)
+                wuz_string = True
+            elif val is None:
+                rv='<None>'
+            else:
+                rv=str(val)
+            if len(rv) > 15:
+                if wuz_string:
+                    rv = "<%s'...>" % rv[:9]
+                else:
+                    rv = '[%s...]' % rv[:10]
+            rv = click.style(rv, fg='cyan', bold=True)
+            return rv
+        except:
+            try:
+                return click.style('<unprintable:%s>' % val.__class__.__name__, fg='red', bold=True)
+            except:
+                return click.style('<unprintable:WTF?>', fg='red', bold=True)
+
+    def _style_arg(self, argtuple):
+        if len(argtuple) > 1:
+            return ''.join((
+                '%s=' % argtuple[1],
+                self._style_argval(argtuple[0])
+            ))
+        else:
+            return self._style_argval(argtuple[0])
+
+    def _style_arglist(self, arglist):
+        if len(arglist) > 10:
+            newarglist = arglist[:18]
+            newarglist.append( ('<< %d SKIPPED ARGS >>' % len(arglist) - 18,) )
+            newarglist.append(arglist[-1])
+            arglist = newarglist
+        return ', '.join((
+            [self._style_arg(argtuple) for argtuple in arglist]
+        ))
+
+    def say(self, something):
+        echov(something, vl=3, err=True)
+    def indent(self):
+        self._indent += 1
+    def dedent(self):
+        self._indent -= 1
+        if self._indent < 0:
+            # oops, fuck it, I guess
+            self._indent = 0
+
+_at = AutoTracer()
+
+def auto_trace_function(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        _at.say(
+            _at.style_fn(
+                f.__name__,
+                tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
+            )
+        )
+        _at.indent()
+        try:
+            rv = f(*args, **kwargs)
+            _at.say(_at.style_rvfn(f.__name__, rv))
+            return rv
+        finally:
+            _at.dedent()
+    return wrapper
+
+def auto_trace_method(m):
+    @wraps(m)
+    def methodwrapper(self, *args, **kwargs):
+        _at.say(
+            _at.style_m(
+                self,
+                m.__name__,
+                tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
+            )
+        )
+        _at.indent()
+        try:
+            rv = m(self, *args, **kwargs)
+            _at.say(_at.style_rvm(self, m.__name__, rv))
+            return rv
+        finally:
+            _at.dedent()
+    return methodwrapper

@@ -40,7 +40,7 @@ import click
 from .kngclicktextwrapper import KNGClickTextWrapper
 from .kngtextwrapper import kngterm_len, kngexpandtabs
 from .version import version
-from .output import set_verbose_level
+from .output import set_verbose_level, auto_trace_function, auto_trace_method
 
 KNG_OPTIONS_METAVAR = ''.join((
     style('[', fg='blue'),
@@ -135,6 +135,7 @@ click.formatting.__dict__['wrap_text'] = kngwrap_text
 
 class KNGHelpFormatter(HelpFormatter):
     # allow a maximum default width of 120 vs. HelpFormatter's 80
+    @auto_trace_method
     def __init__(self, *args, **kwargs):
         if 'width' in kwargs:
             width = kwargs.pop('width')
@@ -145,6 +146,7 @@ class KNGHelpFormatter(HelpFormatter):
         self._kngsection = None
         super(KNGHelpFormatter, self).__init__(*args, **kwargs)
 
+    @auto_trace_method
     def write_heading(self, heading):
         """
         Writes a heading into the buffer, applying some styling if the heading
@@ -159,6 +161,7 @@ class KNGHelpFormatter(HelpFormatter):
             super(KNGHelpFormatter, self).write_heading(heading)
 
     @contextmanager
+    @auto_trace_method
     def section(self, name):
         """Wrap click.HelpFormatter.section() so as to track the
         most recently added section name.
@@ -173,10 +176,12 @@ class KNGHelpFormatter(HelpFormatter):
         finally:
             self._kngsection = oldkngsection
 
+    @auto_trace_method
     def write_usage(self, prog, args='', prefix='Usage: '):
         prog = style(prog, fg='white', bold=True)
         super(KNGHelpFormatter, self).write_usage(prog, args=args, prefix=prefix)
 
+    @auto_trace_method
     def dl_style_word(self, word):
         if len(word) == 0:
             return word
@@ -189,6 +194,7 @@ class KNGHelpFormatter(HelpFormatter):
         else:
             return style(word, fg='white', bold=True)
 
+    @auto_trace_method
     def write_dl(self, rows, *args, **kwargs):
         newrows = []
         for row in rows:
@@ -205,12 +211,14 @@ class KNGHelpFormatter(HelpFormatter):
         super(KNGHelpFormatter, self).write_dl(newrows, *args, **kwargs)
 
 class KNGContext(Context):
+    @auto_trace_method
     def make_formatter(self):
         return KNGHelpFormatter(width=self.terminal_width)
 
 no_color_mode = False
 
 # generate a new echo function suitable for monkey patching an old one
+# nb: definitely not a good idea to trace the inner function!!!
 def nocolorecho(oldecho):
     def newecho(*args, **kwargs):
         if no_color_mode:
@@ -237,6 +245,7 @@ def no_color(ctx, command, value):
         click.__dict__['echo'] = nocolorecho(click.echo)
 
 class KNGGroup(Group):
+    @auto_trace_method
     def __init__(self, *args, **kwargs):
         options_metavar = kwargs.pop('options_metavar', KNG_OPTIONS_METAVAR)
         kwargs['options_metavar'] = options_metavar
@@ -246,6 +255,8 @@ class KNGGroup(Group):
             SUBCOMMANDS_METAVAR if chain else SUBCOMMAND_METAVAR)
         kwargs['subcommand_metavar'] = subcommand_metavar
         super(KNGGroup, self).__init__(*args, **kwargs)
+
+    @auto_trace_method
     def make_context(self, info_name, args, parent=None, **extra):
         for key, value in iter((self.context_settings or {}).items()):
             if key not in extra:
@@ -253,12 +264,14 @@ class KNGGroup(Group):
         ctx = KNGContext(self, info_name=info_name, parent=parent, **extra)
         self.parse_args(ctx, args)
         return ctx
+
     def kngcommand(self, *args, **kwargs):
         def decorator(f):
             cmd = kngcommand(*args, **kwargs)(f)
             self.add_command(cmd)
             return cmd
         return decorator
+
     def knggroup(self, *args, **kwargs):
         def decorator(f):
             cmd = knggroup(*args, **kwargs)(f)
@@ -267,10 +280,13 @@ class KNGGroup(Group):
         return decorator
 
 class KNGCommand(Command):
+    @auto_trace_method
     def __init__(self, *args, **kwargs):
         options_metavar = kwargs.pop('options_metavar', KNG_OPTIONS_METAVAR)
         kwargs['options_metavar'] = options_metavar
         super(KNGCommand, self).__init__(*args, **kwargs)
+
+    @auto_trace_method
     def make_context(self, info_name, args, parent=None, **extra):
         for key, value in iter((self.context_settings or {}).items()):
             if key not in extra:
@@ -278,6 +294,7 @@ class KNGCommand(Command):
         ctx = KNGContext(self, info_name=info_name, parent=parent, **extra)
         self.parse_args(ctx, args)
         return ctx
+
     def kngcommand(self, *args, **kwargs):
         def decorator(f):
             cmd = kngcommand(*args, **kwargs)(f)
@@ -336,6 +353,7 @@ def knggroup(name=None, cls=None, **kwargs):
 
 class Octal_3ParamType(click.ParamType):
     name = 'octal_3'
+    @auto_trace_method
     def convert(self, value, param, ctx):
         origvalue = value
         try:
