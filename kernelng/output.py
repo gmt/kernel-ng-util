@@ -230,8 +230,10 @@ class AutoTracer(object):
             [self._style_arg(argtuple) for argtuple in arglist]
         ))
 
-    def say(self, something):
-        echov(something, vl=3, err=True)
+    def say(self, lambdasomething):
+        if has_verbose_level(3):
+            echov(lambdasomething(), err=True)
+
     def indent(self):
         self._indent += 1
     def dedent(self):
@@ -246,7 +248,7 @@ def auto_trace_function(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         _at.say(
-            _at.style_fn(
+            lambda: _at.style_fn(
                 f.__name__,
                 tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
             )
@@ -254,7 +256,7 @@ def auto_trace_function(f):
         _at.indent()
         try:
             rv = f(*args, **kwargs)
-            _at.say(_at.style_rvfn(f.__name__, rv))
+            _at.say(lambda: _at.style_rvfn(f.__name__, rv))
             return rv
         finally:
             _at.dedent()
@@ -264,7 +266,7 @@ def auto_trace_method(m):
     @wraps(m)
     def methodwrapper(self, *args, **kwargs):
         _at.say(
-            _at.style_m(
+            lambda: _at.style_m(
                 self,
                 m.__name__,
                 tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
@@ -273,7 +275,7 @@ def auto_trace_method(m):
         _at.indent()
         try:
             rv = m(self, *args, **kwargs)
-            _at.say(_at.style_rvm(self, m.__name__, rv))
+            _at.say(lambda: _at.style_rvm(self, m.__name__, rv))
             return rv
         finally:
             _at.dedent()
