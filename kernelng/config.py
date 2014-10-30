@@ -652,6 +652,13 @@ class KNGConfigItems(list):
         self.extend(values)
         return self
 
+    def __imul__(self, value):
+        raise NotImplementedError('KNGConfigItems.__imul__')
+    def __mul__ (self, other):
+        raise NotImplementedError('KNGConfigItems.__mul__')
+    def __rmul__ (self, other):
+        raise NotImplementedError('KNGConfigItems.__rmul__')
+
 class KNGConfig(OrderedDict):
     def __init__(self, kernelng_conf_file=KERNELNG_CONF_FILE, repos_conf_file=REPOS_CONF_FILE):
         self._kernelng_conf_file = kernelng_conf_file
