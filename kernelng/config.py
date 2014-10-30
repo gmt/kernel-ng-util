@@ -308,6 +308,10 @@ class KNGConfigItem(object):
     def comment(self):
         return self.value
 
+    @property
+    def daddy(self):
+        return self._daddy
+
     def __eq__(self, other):
         if isinstance(other, KNGConfigItem):
             if other.key != self.key:
