@@ -527,6 +527,9 @@ class KNGConfigItems(list):
 
     @property
     def fetal(self):
+        return self.is_fetal()
+
+    def is_fetal(self):
         return self._fetal
 
     def __contains__(self, key):
