@@ -151,9 +151,16 @@ class KNGTextWrapper(object):
                  drop_whitespace=True,
                  break_on_hyphens=True,
                  tabsize=8,
-                 *,
-                 max_lines=None,
-                 placeholder=' [...]'):
+                 *args,
+                 **kwargs):
+                 # max_lines=None,
+                 # placeholder=' [...]'):
+        if len(args) > 0:
+            raise TypeError('Unknown positional arguments: %r' % args)
+
+        max_lines = kwargs.pop('max_lines', None)
+        placeholder = kwargs.pop('placeholder', ' [...]')
+
         self.width = width
         self.initial_indent = initial_indent
         self.subsequent_indent = subsequent_indent
