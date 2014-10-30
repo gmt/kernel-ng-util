@@ -38,6 +38,7 @@ import os
 
 from argparse import HelpFormatter
 from functools import wraps
+from .utils import is_string
 import click
 
 def encoder(text, _encoding_):
@@ -103,31 +104,6 @@ def sechov(text, vl=1, file=None, nl=True, err=None, **styles):
             else:
                 err=False
         click.secho(text, file, nl, err, **styles)
-
-_string_types=None
-
-def _init_stringtypes():
-    strtypes=[ type('') ]
-    try:
-        strtypes.append(basestring)
-    except NameError:
-        pass
-    btype=type(b'')
-    if btype not in strtypes:
-        strtypes.append(btype)
-    try:
-        eval("strtypes.append(type(u''))")
-    except SyntaxError:
-        pass
-
-    global _string_types
-    _string_types = tuple(set(strtypes))
-
-if _string_types is None:
-    _init_stringtypes()
-
-def is_string(thing):
-    return isinstance(thing, _string_types)
 
 class AutoTracer(object):
     def __init__(self):
