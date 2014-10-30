@@ -30,7 +30,7 @@ import sys
 import re
 
 from collections import OrderedDict
-from itertools import chain
+from itertools import chain, islice, count, repeat
 
 import click
 from click._compat import iteritems
@@ -659,6 +659,231 @@ class KNGConfigItems(list):
     def __rmul__ (self, other):
         raise NotImplementedError('KNGConfigItems.__rmul__')
 
+class KNGGlobalConfigItemsProxy(KNGConfigItems):
+    def __init__(self, daddy):
+        self._implicit = daddy['implicit_global']
+        self._explicit = daddy['global']
+        super(KNGGlobalConfigItemsProxy, self).__init__(daddy=daddy, fetal=self.fetal)
+
+    def __contains__(self, key):
+        return self._implicit.__contains__(key) or self._explicit.__contains__(key)
+
+    def __len__(self):
+        return len(self._implicit) + len(self._explicit)
+
+    def _fake_self_for_query(self):
+        return list(self._implicit) + list(self._explicit)
+
+    def _fake_self_for_append(self):
+        if not self._explicit.fetal:
+            return self._explicit
+        elif not self._implicit.fetal:
+            return self._implicit
+        else:
+            return self._explicit
+
+    def __repr__(self):
+        return 'KNGConfigItems(%s)' % self._fake_self_for_query()
+
+    def is_fetal(self):
+        return self._implicit.fetal and self._explicit.fetal
+
+    def iterkeypairs(self):
+        return (
+            (item.key, item.value)
+            for item in self._fake_self_for_query()
+            if (not item.fetal) and (not item.iscomment)
+        )
+    def iterkeys(self):
+        return ( item[0] for item in self.iterkeypairs() )
+    def itervalues(self):
+        return ( item[1] for item in self.iterkeypairs() )
+    def iterexplicit(self):
+        return ( item for item in self._fake_self_for_query() if item.isexplicit )
+
+    def find_default(self, key):
+        '''
+        Returns any default that would be associated with the provided key in
+        the current section or None, if none can be found, using the global
+        defaults dict.  Raises TypeError if we have no daddy.
+        '''
+        # section_of won't work but thankfully we don't need it!
+        if key in KNGGlobalDefaults():
+            return KNGGlobalDefaults()[key]
+        return None
+
+    def __getitem__(self, index):
+        if isinstance(index, slice) or isinstance(index, int):
+            return self._fake_self_for_query().__getitem__(index)
+        for item in self._fake_self_for_query():
+            if (not item.iscomment) and item.key == index:
+                # note: this will return any existing "fetus" with the requested key.
+                return item
+        return self._missing(index)
+    def _missing(self, key):
+        # add a "fetal" KNGConfigItem for the provided key, analogous to __missing__ in dict
+        real_daddy=self._fake_self_for_append()
+        rv = KNGConfigItem(key, None, default=self.find_default(key), daddy=real_daddy)
+        real_daddy.append(rv)
+        return rv
+
+    def __setitem__(self, index, value):
+        if value is None:
+            raise ValueError('KNGGlobalConfigItemsProxy.__setitem__: use del instead? assigning None is prohibited.')
+        elif index == '__comment__':
+            # always treat this as a request to append a new comment
+            real_daddy = self._fake_self_for_append()
+            real_daddy._fetal = False
+            real_daddy.append(KNGConfigItem(value, daddy=real_daddy))
+            return
+        elif isinstance(index, int):
+            if index >= len(self._implicit):
+                self._explicit[index - len(self._implicit)] = value
+            else:
+                self._implicit[index] = value
+            return
+        elif isinstance(index, slice):
+            start, stop, step = index.indices(len(self))
+            if step != 1:
+                raise NotImplementedError('Fancy stepping behavior not supported here.')
+            if start < len(self._implicit) and stop > len(self._implicit):
+                raise NotImplementedError('No soap, honky-lips: %s, %s.' % (slice(start,stop,step), len(self._implicit)))
+            if start < len(self._implicit):
+                self._implicit[slice(start,stop,step)] = value
+            else:
+                start -= len(self._implicit)
+                stop -= len(self._implicit)
+                self._explicit[slice(start, stop, step)] = value
+            return
+            # done!
+        for (itemindex, item), realdeal in chain(zip(enumerate(self._implicit), repeat(self._implicit)),
+                                                 zip(enumerate(self._explicit), repeat(self._explicit))):
+            if (not item.iscomment) and item.key == index:
+                if isinstance(value, KNGConfigItem):
+                    # this is fucked, what if daddy didn't match up?  just copy the value i guess...
+                    # FIXME
+                    realdeal[itemindex].value = value.value
+                    return
+                else:
+                    item.value = value
+                    return
+        if isinstance(value, KNGConfigItem):
+            self._fake_self_for_append().append(value)
+        else:
+            self._fake_self_for_append().append(KNGConfigItem(index, value, daddy=self))
+
+    def __delitem__(self, index):
+        if isinstance(index, slice):
+            start, stop, step = index.indices(len(self))
+            if step != 1:
+                raise NotImplementedError('Fancy stepping behavior not supported here.')
+            if start < len(self._implicit) and stop > len(self._implicit):
+                raise NotImplementedError('No soap, honky-lips: %s, %s.' % (slice(start,stop,step), len(self._implicit)))
+            if start < len(self._implicit):
+                del(self._implicit[slice(start,stop,step)])
+            else:
+                start -= len(self._implicit)
+                stop -= len(self._implicit)
+                del(self._explicit[slice(start, stop, step)])
+            return
+        elif isinstance(index, int):
+            if index >= len(self._implicit):
+                del(self._explicit[index - len(self._implicit)])
+            else:
+                del(self._implicit[index])
+            return
+
+        for (itemindex, item), realdeal in chain(zip(enumerate(self._implicit), repeat(self._implicit)),
+                                                 zip(enumerate(self._explicit), repeat(self._explicit))):
+            if (not item.iscomment) and item.key == index:
+                del(realdeal[itemindex])
+                return
+        raise IndexError('Could not find item matching index "%s" in %s to delete' % (index, self))
+
+    def insert(self, index, value):
+        if isinstance(index, int):
+            if index < len(self._implicit):
+                self._implicit.insert(index, value)
+            else:
+                self._explicit.insert(index - len(self._implicit), value)
+            return
+        for (itemindex, item), realdeal in chain(zip(enumerate(self._implicit), repeat(self._implicit)),
+                                                 zip(enumerate(self._explicit), repeat(self._explicit))):
+            if (not item.iscomment) and item.key == index:
+                realdeal.insert(itemindex, value)
+                return
+        raise IndexError('Could not find item matching insertion index "%s" in %s' % (index, self))
+
+    def append(self, value):
+        for (itemindex, item), realdeal in chain(zip(enumerate(self._implicit), repeat(self._implicit)),
+                                                 zip(enumerate(self._explicit), repeat(self._explicit))):
+            if (not item.iscomment) and item.key == value.key:
+                del(realdeal[itemindex])
+                realdeal.append(value)
+                return
+        self._fake_self_for_append().append(value)
+
+    def clear(self):
+        self._implicit.clear()
+        self._explicit.clear()
+
+    def index(self, *args):
+        return self._fake_self_for_query().index(*args)
+
+    def pop(self, index=None):
+        if index is None:
+            index = len(self) - 1
+        if index >= len(self._implicit):
+            return self._explicit.pop(index - len(self._implicit))
+        else:
+            return self._implicit.pop(index)
+
+    def remove(self, value):
+        if value in self._implicit:
+            self._implicit.remove(value)
+        else:
+            self._explicit.remove(value)
+
+    def reverse(self):
+        raise NotImplementedError('KNGGlobalCojnfigItemsProxy.reverse')
+
+    def __eq__(self, other):
+        return self._fake_self_for_query().__eq__(other)
+
+    def __ge__(self, other):
+        return self._fake_self_for_query().__ge__(other)
+
+    def __gt__(self, other):
+        return self._fake_self_for_query().__gt__(other)
+
+    def __hash__(self):
+        return self._fake_self_for_query().__hash__()
+
+    def __iter__(self, *args, **kwargs):
+        return self._fake_self_for_query().__iter__(*args, **kwargs)
+
+    def __le__(self, other):
+        return self._fake_self_for_query().__le__(other)
+
+    def __lt__(self, other):
+        return self._fake_self_for_query().__lt__(other)
+
+    def __ne__(self, other):
+        return self._fake_self_for_query().__ne__(other)
+
+    def sort(self):
+        raise NotImplementedError('KNGGlobalConfigItemsProxy.sort')
+
+    def __reversed__(self):
+        raise NotImplementedError('KNGGlobalConfigItemsProxy.__reversed__')
+
+    def __sizeof__(self):
+        return self._implicit.__sizeof__() + self._explicit.__sizeof__()
+
+    def christen(self, item):
+        # should never happen since the KNGConfigItems should have the "real" daddys
+        raise NotImplementedError('KNGGlobalConfigItemsProxy.christen!?')
+
 class KNGConfig(OrderedDict):
     def __init__(self, kernelng_conf_file=KERNELNG_CONF_FILE, repos_conf_file=REPOS_CONF_FILE):
         self._kernelng_conf_file = kernelng_conf_file
@@ -702,6 +927,17 @@ class KNGConfig(OrderedDict):
                 else:
                     self[key].append(KNGConfigItem(item, daddy=self[key]))
 
+    @property
+    def globals(self):
+        '''
+        Returns a virtualized KNGConfigItems proxy which treats the 'global' and 'implicit_global'
+        sections as a unified section.  This helps prevent accidental mistakes like adding the
+        same configuration key to both sections, and simplifies various usages.  When both global
+        and implicit_global sections exist, new items go into the explicit global section; when
+        only one of these sections exist, new items go into it; when neither section exists, new
+        items go into an explicit global section which will be created on demand.
+        '''
+        return KNGGlobalConfigItemsProxy(self)
     def writeConfigText(self, file=None):
         '''
         Write the currently loaded configuration to a given file.
