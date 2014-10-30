@@ -209,7 +209,7 @@ try:
         elif append_to:
             outfile = append_to
         elif force:
-            if not os.path.exists(KERNELNG_CONF_FILE):
+            if not os.path.exists(EKERNELNG_CONF_DIR):
                 os.makedirs(EKERNELNG_CONF_DIR)
             outfile = click.open_file(KERNELNG_CONF_FILE, 'w')
         try:
