@@ -96,7 +96,7 @@ def subconsts(text, subconsts=SUBCONSTS):
     try:
         return text % subconsts if re.search(CONST_RE, text) else text
     except ValueError as e:
-        echov('subconsts: error substituting: "%s".' % str(e), err=True)
+        echov('subconsts: error substituting in "%s": %s.' % (text, str(e)), err=True)
         raise
 
 class KNGConfigItemUnknownReason(Exception):
