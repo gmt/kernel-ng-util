@@ -139,14 +139,19 @@ try:
         ),
         short_help = hs("Create and activate an empty %(progdesc)s overlay.")
     )
-    @click.option('-u', '--uid', type=click.INT, default=portage_uid,
+    @click.option('-u', '--uid', type=click.INT, default=-1,
         help='Numeric user id to assign to overlay files.')
-    @click.option('-g', '--gid', type=click.INT, default=portage_gid,
+    @click.option('-g', '--gid', type=click.INT, default=-1,
         help='Numeric group id to assign to overlay files.')
     @click.option('-p', '--perm', type=OCTAL_3, default=0o664,
         help='Three-digit octal permissions to assign to overlay files.')
     @auto_trace_function
     def create(uid, gid, perm):
+        if uid == -1:
+            # these int casts resolve the portage proxies into integers and
+            # are required in recent python3's
+            uid = int(portage_uid)
+            gid = int(portage_gid)
         pass
 
     @overlay.kngcommand(

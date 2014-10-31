@@ -36,16 +36,14 @@ import click
 from click._compat import iteritems
 
 from .output import has_verbose_level, echov, sechov
+import portage
 
 try:
-    from portage.data import portage_uid as _portage_uid, portage_gid as _portage_gid
+    portage.proxy.lazyimport.lazyimport(globals(),
+        'portage.data:portage_uid,portage_gid')
 except ImportError:
-    _portage_gid = 250
-    _portage_uid = 250
-
-# python3 wigs out if these are proxies
-portage_uid = int(_portage_uid)
-portage_gid = int(_portage_gid)
+    portage_uid = 250
+    portage_gid = 250
 
 # eprefixifiable dummy value
 EPREFIX = "@GENTOO_PORTAGE_EPREFIX@"
