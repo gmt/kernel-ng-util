@@ -86,6 +86,8 @@ SUBCONSTS = {
     'prog': PROGNAME,
     'progdesc': PROGDESC,
     'framework': FRAMEWORK,
+    'kngconf': KERNELNG_CONF,
+    'kngconffile': KERNELNG_CONF_FILE,
     'eprefix': EPREFIX,
 }
 

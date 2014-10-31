@@ -48,21 +48,21 @@ KNG_OPTIONS_METAVAR = ''.join((
     style(']', fg='blue')))
 
 SUBCOMMAND_METAVAR = ''.join((
-    style('COMMAND', fg='cyan', bold=True),
+    style('SUBCOMMAND', fg='cyan', bold=True),
     ' ',
     style('[', fg='blue'),
     style('ARGS', fg='cyan', bold=True),
     style(']...', fg='blue')))
 
 SUBCOMMANDS_METAVAR = ''.join((
-    style('COMMAND1', fg='cyan', bold=True),
+    style('SUBCOMMAND1', fg='cyan', bold=True),
     ' ',
     style('[', fg='blue'),
     style('ARGS', fg='cyan', bold=True),
     style(']...', fg='blue'),
     ' ',
     style('[', fg='blue'),
-    style('COMMAND2', fg='cyan', bold=True),
+    style('SUBCOMMAND2', fg='cyan', bold=True),
     ' ',
     style('[', fg='blue'),
     style('ARGS', fg='cyan', bold=True),
@@ -154,7 +154,7 @@ class KNGHelpFormatter(HelpFormatter):
         """
         if self._kngsection is not None and heading == self._kngsection:
             if heading == 'Commands':
-                heading = 'Command'
+                heading = 'Subcommand'
             self.write('%*s%s%s\n' % (self.current_indent, '',
                 style(heading, fg='cyan', bold=True), style(':', fg='white', bold=True)))
         else:

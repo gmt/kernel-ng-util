@@ -67,26 +67,57 @@ try:
     HS = SUBCONSTS.copy()
     HELPSHORT = '-h'
     HELPLONG = '--help'
-    SUBCMDHELP = 'For detailed help with subcommands, issue the subcommand' \
-        ' followed by the %(helpshort)s or %(helplong)s option.' % {
-            'helpshort': click.style(HELPSHORT, fg='white', bold=True),
-            'helplong': click.style(HELPLONG, fg='white', bold=True),
-    }
-    CONFIG_EXAMPLE_OPTIONS = 'One, at most, of the %(o)s/%(output_to)s,' \
-        ' %(a)s/%(append_to)s or %(f)s/%(force)s options may be used' \
-        ' per invocation, as each specifies where the output goes.' % {
-            'o': click.style('-o', fg='white', bold=True),
-            'output_to': click.style('--output-to', fg='white', bold=True),
+
+    # nb: the indentation here must be kept synchronized with the indentation
+    # in the click helpstrings below.
+    SUBCMDHELP = \
+            """
+            The %(progname)s interface is broken into several nested
+            subcommands.  For detailed subcommand help, issue the
+            subcommand followed by the %(helpshort)s or %(helplong)s
+            option, i.e.:
+
+            \b
+              # kernelng config -h""" % {
+                'helpshort': click.style(HELPSHORT, fg='white', bold=True),
+                'helplong': click.style(HELPLONG, fg='white', bold=True),
+                'progname': click.style(PROGNAME, fg='white', bold=True)
+            }
+
+    CONFIG_EXAMPLE_OPTIONS = 'One, at most, of the %(i)s/%(install)s,' \
+        ' %(I)s/%(install_as)s and %(a)s/%(append_to)s options may be used' \
+        ' per invocation, as these each specify where the output goes.' % {
+            'i': click.style('-i', fg='white', bold=True),
+            'install': click.style('--install', fg='white', bold=True),
+            'I': click.style('-I', fg='white', bold=True),
+            'install_as': click.style('--install-as', fg='white', bold=True),
             'a': click.style('-a', fg='white', bold=True),
             'append_to': click.style('--append-to', fg='white', bold=True),
-            'f': click.style('-f', fg='white', bold=True),
-            'force': click.style('--force', fg='white', bold=True),
     }
     HS['progname'] = click.style(PROGNAME, fg='white', bold=True)
     HS['helpshort'] = HELPSHORT
     HS['helplong'] = HELPLONG
     HS['subcmdhelp'] = SUBCMDHELP
     HS['config_example_options'] = CONFIG_EXAMPLE_OPTIONS
+    HS['fixme'] = click.style('>FIXME!<', fg='red', bold=True)
+
+    HS['early_alpha_warning'] = ''.join((
+        click.style('WARNING', fg='red', bold=True),
+        click.style(':', fg='white', bold=True),
+        ' ',
+        click.style(PROGNAME, fg='magenta', bold=True),
+        ' ',
+        ' '.join((
+            click.style(word, fg='magenta', bold=False) if word else word # ('')
+            for word in ' '.join((
+                'is in an early-alpha stage of development.  Many important',
+                'features are as-yet unimplemented and the code is in a state',
+                'of rapid flux.  It could easily break your ability to boot',
+                'or worse.  Please keep an up-to-date backup, or gamble only',
+                'with what you\'re fully prepared to lose.'
+            )).split(' ')
+        ))
+    ))
 
     def hs(value):
         return subconsts(value, subconsts=HS)
@@ -100,17 +131,45 @@ try:
         context_settings=CONTEXT_SETTINGS,
         help = hs(
             """
-            %(progdesc)s provides the %(prog)s command to manage
-            a site-specific overlay containing customized %(framework)s
-            packages.  The following example sequence
-            of commands could be used to configure and deploy
-            a %(framework)s package from scratch:
+            %(progdesc)s provides the %(progname)s command to manage
+            a site-specific overlay containing customized portage packages
+            utilizing the %(framework)s framework.  In other words, it
+            facilitates the creation and installation of a fully deployed
+            linux kernel package in Gentoo according to your preferences.
+
+            %(early_alpha_warning)s
+
+            From scratch, the following sequence of commands, run as root,
+            would activate a generic %(framework)s configuration and
+            generate the %(framework)s overlay:
 
             \b
-              $ sudo %(prog)s config example --force
-              $ sudo %(prog)s overlay create
-              $ sudo %(prog)s ebuild create ng
-              $ sudo emerge -u @world
+              # %(prog)s config example --install
+              # %(prog)s overlay create
+
+            One could then issue the following to deploy the kernel
+            from a %(framework)s overlay generated as above:
+
+            \b
+              # emerge sys-kernel/ng-sources
+
+            Using an appropriate %(framework)s configuration for your site,
+            there may be no need to run "genkernel," "make modules_install,"
+            "grub2-mkconfig," nor any other kernel-specific installation
+            ritual.  Instead, your kernel may be managed just like the other
+            packages on your Gentoo or Gentoo-like system, using portage.
+
+            There is, however, one extra bit of labor that must be regularly
+            performed to update the %(framework)s overlay with ebuilds
+            corresponding to the latest-and-greatest kernel packages available
+            in Gentoo.  Someone must run:
+
+            \b
+              # %(prog)s overlay update
+
+            Those comfortable automating their kernel upgrade process
+            entirely could integrate this step into their standard emerge
+            --sync process by %(fixme)sing.
 
             %(subcmdhelp)s
             """
@@ -202,7 +261,11 @@ try:
     @config.kngcommand(
         help = hs(
             """
-            Display the hard-coded example %(framework)s configuration file which shipped with this version of %(progname)s.
+            Display or save the hard-coded example configuration file that came with this version of %(progdesc)s.
+            The output is in the "%(kngconf)s" format utilized by %(progname)s, and illustrates the %(kngconf)s
+            syntax while providing a brief commented explanation of each of the supported settings.  The example
+            may also serve as a means to bootstrap the %(progdesc)s configuration process, as it contains a sensible
+            baseline configuration likely to meet the needs of a plurality of %(framework)s users.
 
             %(config_example_options)s
             """
