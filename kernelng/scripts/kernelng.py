@@ -42,7 +42,8 @@ from kernelng.kngclick import kngcommand, knggroup, OCTAL_3
 import portage
 
 from ..config import EPREFIX, portage_uid, portage_gid, PROGNAME, PROGDESC, \
-    FRAMEWORK, SUBCONSTS, subconsts, EKERNELNG_CONF_DIR, KERNELNG_CONF_FILE
+    FRAMEWORK, SUBCONSTS, subconsts, EKERNELNG_CONF_DIR, KERNELNG_CONF_FILE, \
+    KNGConfig
 
 from ..output import auto_trace_function, auto_trace_method, echov, sechov
 
@@ -152,7 +153,14 @@ try:
             # are required in recent python3's
             uid = int(portage_uid)
             gid = int(portage_gid)
-        pass
+        conf = KNGConfig()
+        # conf.loadConfigText(config_file)
+        # if location is not None:
+        #     conf.globals['overlay'].override = location
+        # if conf.overlayExists():
+        #     if not force:
+        #         conf.destroyOverlay()
+        conf.createOverlay(uid, gid, perm)
 
     @overlay.kngcommand(
         help = hs(
