@@ -276,7 +276,7 @@ try:
         'configuration example file to %(kngconffile)s.'))
     @click.option('-I', '--install-as', type=click.Path(dir_okay=False, writable=True), help='Write output to file instead of standard output.')
     @click.option('-a', '--append-to', type=click.Path(dir_okay=False, writable=True), help='Append output to end of the specified file.')
-    @click.option('-f', '--force', is_flag=True, help='Replace existing configuration file, if present (applies to %s and %s options).' % (
+    @click.option('-f', '--force', is_flag=True, help='Replace existing configuration file, if present (valid only with %s or %s option).' % (
         click.style('--install-as', fg='white', bold=True), click.style('--install', fg='white', bold=True)))
     @click.option('-n', '--no-comments', is_flag=True, help='Omit all comments and blank lines in the example file.')
     @trace
