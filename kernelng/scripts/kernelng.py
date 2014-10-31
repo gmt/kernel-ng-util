@@ -45,7 +45,7 @@ from ..config import EPREFIX, portage_uid, portage_gid, PROGNAME, PROGDESC, \
     FRAMEWORK, SUBCONSTS, subconsts, EKERNELNG_CONF_DIR, KERNELNG_CONF_FILE, \
     KNGConfig
 
-from ..output import auto_trace_function, auto_trace_method, echov, sechov
+from ..output import trace, echov, sechov
 
 # This block ensures that ^C interrupts are handled quietly.
 try:
@@ -128,7 +128,7 @@ try:
             """
         )
     )
-    @auto_trace_function
+    @trace
     def overlay():
         pass
 
@@ -146,7 +146,7 @@ try:
         help='Numeric group id to assign to overlay files.')
     @click.option('-p', '--perm', type=OCTAL_3, default=0o664,
         help='Three-digit octal permissions to assign to overlay files.')
-    @auto_trace_function
+    @trace
     def create(uid, gid, perm):
         if uid == -1:
             # these int casts resolve the portage proxies into integers and
@@ -170,7 +170,7 @@ try:
         ),
         short_help = hs("Deactivate or remove %(progdesc)s overlay.")
     )
-    @auto_trace_function
+    @trace
     def destroy():
         pass
 
@@ -183,7 +183,7 @@ try:
             """
         )
     )
-    @auto_trace_function
+    @trace
     def config():
         pass
 
@@ -195,7 +195,7 @@ try:
         ),
         short_help = hs("Display %(framework)s configuration info.")
     )
-    @auto_trace_function
+    @trace
     def show():
         pass
 
@@ -212,7 +212,7 @@ try:
     @click.option('-o', '--output-to', type=click.File('w'), help='Write output to file instead of standard output.')
     @click.option('-a', '--append-to', type=click.File('a'), help='Append output to end of file.')
     @click.option('-f', '--force', is_flag=True, help='Reset global configuration file to contain the example config.')
-    @auto_trace_function
+    @trace
     def example(output_to=None, append_to=None, force=False):
         outfile = None
         if sum([1 if x else 0 for x in [output_to, append_to, force]]) > 1:

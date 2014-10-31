@@ -37,8 +37,10 @@ import locale
 import os
 
 from argparse import HelpFormatter
-from functools import wraps
+from functools import wraps, partial
+from inspect import isclass, ismethod
 from .utils import is_string
+import wrapt
 import click
 
 def encoder(text, _encoding_):
@@ -105,9 +107,15 @@ def sechov(text, vl=1, file=None, nl=True, err=None, **styles):
                 err=False
         click.secho(text, file, nl, err, **styles)
 
+# we use this dummy as an alternative to None so that valid NoneType keyword arguments
+# can be distinguished from missing arguments.
+_seriously_invalid_argument = object()
+
 class AutoTracer(object):
     def __init__(self):
         self._indent = 0
+        self._suppression = 0
+
     def style_fn(self, f, arglist):
         return ''.join((
             '  ' * min(self._indent, 20),
@@ -125,7 +133,7 @@ class AutoTracer(object):
             ' ',
             click.style('<--', fg='green', bold=True),
             ' ',
-            self._style_argval(rv)
+            self._style_obj(rv, objcolor='magenta')
         ))
     def style_m(self, mi, m, arglist):
         return ''.join((
@@ -133,6 +141,19 @@ class AutoTracer(object):
             self._style_obj(mi, m),
             click.style('.', fg='white', bold=True),
             click.style(m, fg='blue', bold=True),
+            click.style('(', fg='white', bold=True),
+            self._style_arglist(arglist),
+            click.style(')', fg='white', bold=True),
+        ))
+
+    def style_cm(self, cls, cm, arglist):
+        return ''.join((
+            '  ' * min(self._indent, 20),
+            '<',
+            click.style(mc.__name__, fg='yellow', bold=True),
+            ' class>',
+            click.style('.', fg='white', bold=True),
+            click.style(cm, fg='blue', bold=True),
             click.style('(', fg='white', bold=True),
             self._style_arglist(arglist),
             click.style(')', fg='white', bold=True),
@@ -148,44 +169,82 @@ class AutoTracer(object):
             ' ',
             click.style('<--', fg='green', bold=True),
             ' ',
-            self._style_argval(rv),
+            self._style_obj(rv, objcolor='magenta'),
         ))
-    def _style_obj(self, mi, m):
-        try:
-            if m in ['__repr__', '__str__']:
-                return 'inst:%s' % click.style(mi.__class__.__name__, fg='yellow', bold=True)
-            rv = str(mi)
-            if len(rv) > 15:
-                return 'inst:%s' % click.style(mi.__class__.__name__, fg='yellow', bold=True)
-            else:
-                rv = click.style(rv, fg='yellow', bold=True)
-                return rv
-        except:
-            return 'inst:%s' % click.style(mi.__class__.__name__, fg='yellow', bold=True)
 
+    def style_rvcm(self, cls, cm, rv):
+        return ''.join((
+            '  ' * max(min(self._indent - 1, 20), 0),
+            '<',
+            click.style(cls.__name__, fg='yellow', bold=True),
+            ' class>',
+            click.style('.', fg='white', bold=True),
+            click.style(cm, fg='blue', bold=True),
+            click.style('()', fg='white', bold=True),
+            ' ',
+            click.style('<--', fg='green', bold=True),
+            ' ',
+            self._style_obj(rv, objcolor='magenta'),
+        ))
+
+    def _errobj_style(self, obj, e, objcolor='yellow'):
+        try:
+            return '%s%s<%s%s%s>%s' % (
+                click.style(obj.__class__.__name__, fg=objcolor, bold=True),
+                click.style('(', fg='white', bold=True),
+                click.style('WTF', fg='red', bold=True),
+                click.style(':', fg='white', bold=False),
+                click.style(repr(e), fg='red', bold=False),
+                click.style(')', fg='white', bold=True)
+            )
+        except Exception as e:
+            try:
+                return '<WTF:%s>' % str(e)
+            except:
+                return '<OMGWTFBBQ>'
+
+    def _style_obj(self, mi, m=None, objcolor='yellow'):
+        try:
+            if m in ['__repr__', '__str__', '__getattr__', '__getitem__']:
+                return '%s%s' % (
+                    click.style(mi.__class__.__name__, fg=objcolor, bold=True),
+                    click.style('()', fg='white', bold=True)
+                )
+            if mi is None:
+                return click.style('<None>', fg=objcolor, bold=True)
+            elif isinstance(mi, bool):
+                return click.style('%r' % mi, fg=objcolor, bold=True)
+            rv = repr(mi)
+            if len(rv) > 20:
+                if is_string(mi):
+                    return("%s%s...%s%s" % (
+                        click.style(rv[0], fg='white', bold=True),
+                        click.style(rv[1:8], fg=objcolor, bold=True),
+                        click.style(rv[-7:-1], fg=objcolor, bold=True),
+                        click.style(rv[-1], fg='white', bold=True)
+                    ))
+                else:
+                    rv = '[%s...%s]' % (
+                            click.style(rv[:8], fg='magenta', bold=False),
+                            click.style(rv[-7:], fg='magenta', bold=False)
+                    )
+            else:
+                if is_string(mi):
+                    return click.style(rv, fg=objcolor, bold=True)
+                else:
+                    rv = click.style(rv, fg='magenta', bold=False)
+
+            return '%s%s%s%s' % (
+                click.style(mi.__class__.__name__, fg=objcolor, bold=True),
+                click.style('(', fg='white', bold=True),
+                rv,
+                click.style(')', fg='white', bold=True)
+            )
+        except Exception as e:
+            return self._errobj_style(mi, e)
 
     def _style_argval(self, val):
-        try:
-            wuz_string = False
-            if is_string(val):
-                rv=repr(val)
-                wuz_string = True
-            elif val is None:
-                rv='<None>'
-            else:
-                rv=str(val)
-            if len(rv) > 15:
-                if wuz_string:
-                    rv = "<%s'...>" % rv[:9]
-                else:
-                    rv = '[%s...]' % rv[:10]
-            rv = click.style(rv, fg='cyan', bold=True)
-            return rv
-        except:
-            try:
-                return click.style('<unprintable:%s>' % val.__class__.__name__, fg='red', bold=True)
-            except:
-                return click.style('<unprintable:WTF?>', fg='red', bold=True)
+        return self._style_obj(val, objcolor='cyan')
 
     def _style_arg(self, argtuple):
         if len(argtuple) > 1:
@@ -206,9 +265,12 @@ class AutoTracer(object):
             [self._style_arg(argtuple) for argtuple in arglist]
         ))
 
-    def say(self, lambdasomething):
-        if has_verbose_level(3):
-            echov(lambdasomething(), err=True)
+    def say(self, lambdasomething, warning=False, arg=_seriously_invalid_argument):
+        if self._suppression <= 0 and has_verbose_level(3) or (warning and has_verbose_level(1)):
+            if arg is not _seriously_invalid_argument:
+                echov(lambdasomething(arg), err=True)
+            else:
+                echov(lambdasomething(), err=True)
 
     def indent(self):
         self._indent += 1
@@ -217,42 +279,66 @@ class AutoTracer(object):
         if self._indent < 0:
             # oops, fuck it, I guess
             self._indent = 0
+    def suppress(self):
+        self._suppression += 1
+    def unsuppress(self):
+        self._suppression -= 1
 
 _at = AutoTracer()
 
-def auto_trace_function(f):
+def trace(wrapped=None, warning=False):
+    if wrapped is None:
+        return partial(trace, warning=warning)
+
+    @wrapt.decorator
+    def trace_decorator(wrapped, instance, args, kwargs):
+        if instance is None:
+            if isclass(wrapped):
+                # class
+                raise TypeError('trace decorator applied to class object: %r' % wrapped)
+            else:
+                # function or staticmethod
+                lambda_pre = lambda: _at.style_fn(
+                    wrapped.__name__,
+                    tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
+                )
+                lambda_post = lambda rv: _at.style_rvfn(wrapped.__name__, rv)
+        else:
+            if isclass(instance):
+                # classmethod
+                lambda_pre = lambda: _at.style_cm(
+                    instance,
+                    wrapped.__name__,
+                    tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
+                )
+                lambda_post = lambda rv: _at.style_rvcm(instance, wrapped.__name__, rv)
+            else:
+                # instancemethod
+                lambda_pre = lambda: _at.style_m(
+                    instance,
+                    wrapped.__name__,
+                    tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
+                )
+                lambda_post = lambda rv: _at.style_rvm(instance, wrapped.__name__, rv)
+
+        # in each case the rest of the recipe is now the same:
+        _at.say(lambda_pre, warning=warning)
+        _at.indent()
+        try:
+            rv = wrapped(*args, **kwargs)
+            _at.say(lambda_post, warning=warning, arg=rv)
+            return rv
+        finally:
+            _at.dedent()
+
+    return trace_decorator(wrapped)
+
+def suppress_tracing(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        _at.say(
-            lambda: _at.style_fn(
-                f.__name__,
-                tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
-            )
-        )
-        _at.indent()
+        _at.suppress()
         try:
-            rv = f(*args, **kwargs)
-            _at.say(lambda: _at.style_rvfn(f.__name__, rv))
-            return rv
+            return f(*args, **kwargs)
         finally:
-            _at.dedent()
+            _at.unsuppress()
     return wrapper
-
-def auto_trace_method(m):
-    @wraps(m)
-    def methodwrapper(self, *args, **kwargs):
-        _at.say(
-            lambda: _at.style_m(
-                self,
-                m.__name__,
-                tuple(((arg,) for arg in args)) + tuple(((val, kw) for kw, val in iter(kwargs.items())))
-            )
-        )
-        _at.indent()
-        try:
-            rv = m(self, *args, **kwargs)
-            _at.say(lambda: _at.style_rvm(self, m.__name__, rv))
-            return rv
-        finally:
-            _at.dedent()
-    return methodwrapper
