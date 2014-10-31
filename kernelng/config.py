@@ -145,10 +145,10 @@ def ValidateKNGConfigItemReason(key, value, reason):
 # to (amazingly!) there being no */foo package in all of portage.  Clearly this would not be what
 # most API consumers meant by kngconfig['foo'].
 #
-# To solve this dilemma, I created the concept of "fetal" KNGConfigItem and KNGConfigItems instances.
-# In this scheme, two new properties are created: "daddy" and "fetal".  Daddy maps back to the
-# container that contains the instance (nb: implications wrt. i.e., deepclone() are not dealt with
-# yet); meanwhile, fetal tells us:
+# To solve this dilemma, I created the concept of "fetal" KNGConfigItem and KNGConfigItems
+# instances.  In this scheme, two new properties are created: "daddy" and "fetal".  Daddy maps back
+# to the container that contains the instance (nb: implications wrt. i.e., deepclone() are not
+# dealt with yet); meanwhile, fetal tells us:
 #
 #   KNGConfigItem: if the instance has never had a non-None "value" property set
 #   KNGConfigItems: if the instance has ever had any non-fetal KNGConfigItem instances in it.
@@ -173,10 +173,10 @@ def ValidateKNGConfigItemReason(key, value, reason):
 # default value if applicable; in this case, del(conf['foo']['bar']) will not delete the
 # conf['foo']['bar'] KNGConfigItem from conf['foo'] -- instead it will set its reason to "default"
 # which will cause the KNGConfigItem to disappear in the deserialized .conf file).  The third
-# "reason" is as-yet unused and probably broken: "override" is intended to represent a temporary in-memory
-# change to the configuration that will not persist.  The problem is that there is no provisions
-# yet in place to track the persistent value being overriden.  Perhaps the "override" reason is not
-# needed and can be removed.
+# "reason" is as-yet unused and probably broken: "override" is intended to represent a temporary
+# in-memory # change to the configuration that will not persist.  The problem is that there is no
+# provisions yet in place to track the persistent value being overriden.  Perhaps the "override"
+# reason is not needed and can be removed.
 
 class KNGConfigItem(object):
     def __init__(self, key, value='__comment__', default=None, reason=None, daddy=None):
