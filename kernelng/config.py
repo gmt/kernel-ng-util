@@ -955,6 +955,9 @@ class KNGConfig(OrderedDict):
                     else:
                         click.echo('%(itemkey)s = %(itemvalue)s' % { 'itemkey': item.key, 'itemvalue': item.value }, file=file)
 
+    def createOverlay(self, uid, gid, perm):
+        pass
+
     def __missing__(self, index):
         rv=KNGConfigItems(fetal=True, daddy=self)
         self[index] = rv
