@@ -270,31 +270,54 @@ try:
             %(config_example_options)s
             """
         ),
-        short_help = hs("Display an example configuration file.")
+        short_help = hs("Display or save the example configuration file.")
     )
-    @click.option('-o', '--output-to', type=click.File('w'), help='Write output to file instead of standard output.')
-    @click.option('-a', '--append-to', type=click.File('a'), help='Append output to end of file.')
-    @click.option('-f', '--force', is_flag=True, help='Reset global configuration file to contain the example config.')
+    @click.option('-i', '--install', is_flag=True, help=hs('Bootstrap the %(framework)s configuration process by saving the '
+        'configuration example file to %(kngconffile)s.'))
+    @click.option('-I', '--install-as', type=click.Path(dir_okay=False, writable=True), help='Write output to file instead of standard output.')
+    @click.option('-a', '--append-to', type=click.Path(dir_okay=False, writable=True), help='Append output to end of the specified file.')
+    @click.option('-f', '--force', is_flag=True, help='Replace existing configuration file, if present (applies to %s and %s options).' % (
+        click.style('--install-as', fg='white', bold=True), click.style('--install', fg='white', bold=True)))
+    @click.option('-n', '--no-comments', is_flag=True, help='Omit all comments and blank lines in the example file.')
     @trace
-    def example(output_to=None, append_to=None, force=False):
+    def example(install=None, install_as=None, append_to=None, force=False, no_comments=False):
         outfile = None
-        if sum([1 if x else 0 for x in [output_to, append_to, force]]) > 1:
-            raise click.UsageError('Cannot supply -o/--output-to, -a/--append-to, or -f/--force arguments simultaneously.')
-        if output_to:
-            outfile = output_to
-        elif append_to:
-            outfile = append_to
-        elif force:
-            if not os.path.exists(EKERNELNG_CONF_DIR):
-                os.makedirs(EKERNELNG_CONF_DIR)
-            outfile = click.open_file(KERNELNG_CONF_FILE, 'w')
-        try:
-            conf = KNGConfig()
-            conf.loadExampleConfig()
-            conf.writeConfigText(file=outfile)
-        finally:
-            if force:
-                outfile.close()
+        s=sum([1 if x else 0 for x in [install, install_as, append_to]])
+        if s > 1:
+            raise click.UsageError('-i/--install, -I/--install-as, and -a/--append-to arguments applied simultaneously.')
+        if force and (not (install or install_as)):
+            raise click.UsageError('--force only relevant to -i/--install or -I/--install-as options')
+
+        filename = KERNELNG_CONF_FILE if install \
+            else install_as if install_as \
+            else append_to if append_to \
+            else None
+
+        conf = KNGConfig()
+        conf.loadExampleConfig()
+
+        if filename:
+            mode='a' if append_to \
+                else 'w' if force \
+                else 'x'
+            if os.path.exists(filename):
+                if os.path.isdir(filename):
+                    raise click.ClickException('%s must not be a directory.' % filename)
+                elif (not append_to) and not force:
+                    raise click.ClickException('File %s already exists but --force option not provided.' % filename)
+            dirname = os.path.dirname(filename)
+            basename = os.path.basename(filename)
+            if not basename:
+                raise click.ClickException('filename %s appears to be an invalid file-name.' % filename)
+            elif not os.path.exists(dirname):
+                os.makedirs(os.path.dirname(filename))
+            elif not os.path.isdir(dirname):
+                raise click.ClickException('Whatever %s is, it\'s not the directory we need to store %s in.' % (dirname, filename))
+            else:
+                with click.open_file(filename, mode=mode) as outfile:
+                    conf.writeConfigText(file=outfile, no_comments=no_comments)
+        else:
+            conf.writeConfigText(no_comments=no_comments)
 
     if __name__ == '__main__':
         cli()
