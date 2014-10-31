@@ -120,7 +120,8 @@ setup(
     },
     install_requires=[
         'Click',
-        'portage'
+        'portage',
+        'wrapt'
     ],
     entry_points='''
         [console_scripts]
