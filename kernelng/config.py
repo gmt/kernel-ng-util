@@ -1034,6 +1034,22 @@ class KNGConfig(OrderedDict):
                         click.echo('%(itemkey)s = %(itemvalue)s' % { 'itemkey': item.key, 'itemvalue': item.value }, file=file)
 
     @trace
+    def loadConfigText(self, file=None, dirty=False):
+        '''
+        Loads the active configuration from a configuration file.  If the file cannot be parsed, then
+        raises a SyntaxError.
+
+        :param file: If provided, this file will be used.  It can be a python stream, a filename, or
+                     omitted entirely, in which case loadConfigText will look the default filename of
+                     kernelng.config.KERNELNG_CONF_FILE.
+        :param dirty: If True, the active configuration object will not be cleaned before loading
+                      from the specified file.  This will overwrite any settings which conflict and
+                      append any new settings values to the end of their corresponding sections.
+        '''
+        if file is None:
+            file = KERNELNG_CONF_FILE
+
+    @trace
     def createOverlay(self, uid, gid, perm):
         pass
 
