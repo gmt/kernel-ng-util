@@ -1016,7 +1016,7 @@ class KNGConfig(OrderedDict):
         return KNGGlobalConfigItemsProxy(self)
 
     @trace
-    def writeConfigText(self, file=None):
+    def writeConfigText(self, file=None, no_comments=False):
         '''
         Write the currently loaded configuration to a given file.
 
@@ -1031,7 +1031,8 @@ class KNGConfig(OrderedDict):
                     click.echo('[%s]' % key, file=file)
                 for item in vlist.iterexplicit():
                     if item.iscomment:
-                        click.echo(item.comment, file=file)
+                        if not no_comments:
+                            click.echo(item.comment, file=file)
                     else:
                         click.echo('%(itemkey)s = %(itemvalue)s' % { 'itemkey': item.key, 'itemvalue': item.value }, file=file)
 
