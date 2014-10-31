@@ -35,7 +35,8 @@ from itertools import chain, islice, count, repeat
 import click
 from click._compat import iteritems
 
-from .output import has_verbose_level, echov, sechov
+from .output import has_verbose_level, echov, sechov, trace, suppress_tracing
+
 import portage
 
 try:
@@ -179,6 +180,7 @@ def ValidateKNGConfigItemReason(key, value, reason):
 # reason is not needed and can be removed.
 
 class KNGConfigItem(object):
+    @trace
     def __init__(self, key, value='__comment__', default=None, reason=None, daddy=None):
         '''
         This constructor has two forms: KNGConfigItem(<comment-str>) and
@@ -210,6 +212,7 @@ class KNGConfigItem(object):
         self._reason = reason
         self._daddy = daddy
 
+    @suppress_tracing
     def __repr__(self):
         if self.iscomment:
             return 'KNGConfigItem(%r, reason=%r)' % (self.comment, self.reason)
@@ -226,7 +229,9 @@ class KNGConfigItem(object):
     @property
     def value(self):
         return self._value
+
     @value.setter
+    @trace
     def value(self, newvalue):
         if newvalue is None:
             # We need to know if we have left "fetal mode" during an assignment;
@@ -259,7 +264,9 @@ class KNGConfigItem(object):
                 self.reason = 'stored'
             # else: nothing to do: once stored, always stored.
         self._value = newvalue
+
     @value.deleter
+    @trace
     def value(self):
         if self._default is not None:
             self._value = self._default
@@ -276,7 +283,9 @@ class KNGConfigItem(object):
     @property
     def reason(self):
         return self._reason
+
     @reason.setter
+    @trace
     def reason(self, value):
         ValidateKNGConfigItemReason(self.key, self.value, value)
         self._reason = value
@@ -286,6 +295,7 @@ class KNGConfigItem(object):
         return self._value is None
 
     @property
+    @trace
     def isexplicit(self):
         if self.reason == 'default':
             return False
@@ -310,6 +320,7 @@ class KNGConfigItem(object):
     def daddy(self):
         return self._daddy
 
+    @trace
     def __eq__(self, other):
         if isinstance(other, KNGConfigItem):
             if other.key != self.key:
@@ -322,22 +333,34 @@ class KNGConfigItem(object):
         else:
             # fuck it
             return NotImplemented
+
+    @trace
     def __ne__(self, other):
         return not (self == other)
+
+    @trace
     def __gt__(self, other):
         if isinstance(other, KNGConfigItem):
             return self.key > other.key or (self.key == other.key and self.value > other.value) \
                 or (self.key == other.key and self.value == other.value and self.reason > other.reason)
         else:
             return NotImplemented
+
+    @trace
     def __le__(self, other):
         return not self.__gt__(other)
+
+    @trace
     def __lt__(self, other):
         return (not self.__eq__(other)) and self.__le__(other)
+
+    @trace
     def __ge__(self, other):
         return self.__eq__(other) or self.__gt__(other)
 
 kng_example_config_data = None
+
+@trace
 def KNGExampleConfigData():
     global kng_example_config_data
 
@@ -493,6 +516,8 @@ def KNGExampleConfigData():
     return result
 
 kng_global_defaults = None
+
+@trace
 def KNGGlobalDefaults():
     if kng_global_defaults:
         return kng_global_defaults.copy()
@@ -514,6 +539,7 @@ class KNGConfigItems(list):
     the list, or setting the key in-place via __getitem__.  For dict-like behaviors,
     the comments are ignored.
     '''
+    @trace
     def __init__(self, *args, **kwargs):
         if 'fetal' in kwargs:
             self._fetal = kwargs.pop('fetal')
@@ -534,24 +560,34 @@ class KNGConfigItems(list):
     def is_fetal(self):
         return self._fetal
 
+    @trace
     def __contains__(self, key):
         for item in self:
             if item.key == key:
                 return True
         return super(KNGConfigItems, self).__contains__(key)
 
+    @suppress_tracing
     def __repr__(self):
         return 'KNGConfigItems(%s)' % super(KNGConfigItems, self).__repr__()
 
+    @trace
     def iterkeypairs(self):
         return ( (item.key, item.value) for item in self if (not item.fetal) and (not item.iscomment) )
+
+    @trace
     def iterkeys(self):
         return ( item[0] for item in self.iterkeypairs() )
+
+    @trace
     def itervalues(self):
         return ( item[1] for item in self.iterkeypairs() )
+
+    @trace
     def iterexplicit(self):
         return ( item for item in self if item.isexplicit )
 
+    @trace
     def find_default(self, key):
         '''
         Returns any default that would be associated with the provided key in
@@ -565,6 +601,7 @@ class KNGConfigItems(list):
                 return KNGGlobalDefaults()[key]
         return None
 
+    @trace
     def __getitem__(self, index):
         if isinstance(index, slice) or isinstance(index, int):
             return super(KNGConfigItems, self).__getitem__(index)
@@ -573,12 +610,15 @@ class KNGConfigItems(list):
                 # note: this will return any existing "fetus" with the requested key.
                 return item
         return self._missing(index)
+
+    @trace
     def _missing(self, key):
         # add a "fetal" KNGConfigItem for the provided key, analogous to __missing__ in dict
         rv = KNGConfigItem(key, None, default=self.find_default(key), daddy=self)
         self.append(rv)
         return rv
 
+    @trace
     def __setitem__(self, index, value):
         if value is None:
             raise ValueError('KNGConfigItems.__setitem__: use del instead? assigning None is prohibited.')
@@ -607,6 +647,7 @@ class KNGConfigItems(list):
         else:
             self.append(KNGConfigItem(index, value, daddy=self))
 
+    @trace
     def __delitem__(self, index):
         if isinstance(index, slice) or isinstance(index, int):
             super(KNGConfigItems, self).__delitem__(index)
@@ -616,6 +657,8 @@ class KNGConfigItems(list):
                     super(KNGConfigItems, self).__delitem__(itemindex)
                     return
             raise IndexError('Could not find item matching index "%s" in %s to delete' % (index, self))
+
+    @trace
     def insert(self, index, value):
         if isinstance(index, int):
             super(KNGConfigItems, self).insert(index, value)
@@ -625,6 +668,8 @@ class KNGConfigItems(list):
                     super(KNGConfigItems, self).insert(itemindex, value)
                     return
             raise IndexError('Could not find item matching insertion index "%s" in %s' % (index, self))
+
+    @trace
     def append(self, value):
         for itemindex, item in enumerate(self):
             if (not item.iscomment) and item.key == value.key:
@@ -633,19 +678,25 @@ class KNGConfigItems(list):
         if isinstance(value, KNGConfigItem):
             if not value.fetal:
                 self._fetal = False
+
+    @trace
     def extend(self, values):
         for v in values:
             self.append(v)
+
+    @trace
     def pop(self, index=-1):
         v = self[index]
         del self[index]
         return v
 
+    @trace
     def christen(self, item):
         # item is not used ATM, this is just a notification that we now have at least
         # one nonfetal item, which is enough.
         self._fetal = False
 
+    @trace
     def __iadd__(self, values):
         self.extend(values)
         return self
@@ -658,14 +709,17 @@ class KNGConfigItems(list):
         raise NotImplementedError('KNGConfigItems.__rmul__')
 
 class KNGGlobalConfigItemsProxy(KNGConfigItems):
+    @trace
     def __init__(self, daddy):
         self._implicit = daddy['implicit_global']
         self._explicit = daddy['global']
         super(KNGGlobalConfigItemsProxy, self).__init__(daddy=daddy, fetal=self.fetal)
 
+    @trace
     def __contains__(self, key):
         return self._implicit.__contains__(key) or self._explicit.__contains__(key)
 
+    @trace
     def __len__(self):
         return len(self._implicit) + len(self._explicit)
 
@@ -680,25 +734,31 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
         else:
             return self._explicit
 
+    @suppress_tracing
     def __repr__(self):
         return 'KNGConfigItems(%s)' % self._fake_self_for_query()
 
     def is_fetal(self):
         return self._implicit.fetal and self._explicit.fetal
 
+    @trace
     def iterkeypairs(self):
         return (
             (item.key, item.value)
             for item in self._fake_self_for_query()
             if (not item.fetal) and (not item.iscomment)
         )
+    @trace
     def iterkeys(self):
         return ( item[0] for item in self.iterkeypairs() )
+    @trace
     def itervalues(self):
         return ( item[1] for item in self.iterkeypairs() )
+    @trace
     def iterexplicit(self):
         return ( item for item in self._fake_self_for_query() if item.isexplicit )
 
+    @trace
     def find_default(self, key):
         '''
         Returns any default that would be associated with the provided key in
@@ -710,6 +770,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
             return KNGGlobalDefaults()[key]
         return None
 
+    @trace
     def __getitem__(self, index):
         if isinstance(index, slice) or isinstance(index, int):
             return self._fake_self_for_query().__getitem__(index)
@@ -718,6 +779,8 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
                 # note: this will return any existing "fetus" with the requested key.
                 return item
         return self._missing(index)
+
+    @trace
     def _missing(self, key):
         # add a "fetal" KNGConfigItem for the provided key, analogous to __missing__ in dict
         real_daddy=self._fake_self_for_append()
@@ -725,6 +788,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
         real_daddy.append(rv)
         return rv
 
+    @trace
     def __setitem__(self, index, value):
         if value is None:
             raise ValueError('KNGGlobalConfigItemsProxy.__setitem__: use del instead? assigning None is prohibited.')
@@ -770,6 +834,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
         else:
             self._fake_self_for_append().append(KNGConfigItem(index, value, daddy=self))
 
+    @trace
     def __delitem__(self, index):
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self))
@@ -798,6 +863,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
                 return
         raise IndexError('Could not find item matching index "%s" in %s to delete' % (index, self))
 
+    @trace
     def insert(self, index, value):
         if isinstance(index, int):
             if index < len(self._implicit):
@@ -812,6 +878,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
                 return
         raise IndexError('Could not find item matching insertion index "%s" in %s' % (index, self))
 
+    @trace
     def append(self, value):
         for (itemindex, item), realdeal in chain(zip(enumerate(self._implicit), repeat(self._implicit)),
                                                  zip(enumerate(self._explicit), repeat(self._explicit))):
@@ -821,13 +888,16 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
                 return
         self._fake_self_for_append().append(value)
 
+    @trace
     def clear(self):
         self._implicit.clear()
         self._explicit.clear()
 
+    @trace
     def index(self, *args):
         return self._fake_self_for_query().index(*args)
 
+    @trace
     def pop(self, index=None):
         if index is None:
             index = len(self) - 1
@@ -836,6 +906,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
         else:
             return self._implicit.pop(index)
 
+    @trace
     def remove(self, value):
         if value in self._implicit:
             self._implicit.remove(value)
@@ -857,6 +928,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
     def __hash__(self):
         return self._fake_self_for_query().__hash__()
 
+    @trace
     def __iter__(self, *args, **kwargs):
         return self._fake_self_for_query().__iter__(*args, **kwargs)
 
@@ -878,22 +950,26 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
     def __sizeof__(self):
         return self._implicit.__sizeof__() + self._explicit.__sizeof__()
 
+    @trace
     def christen(self, item):
         # should never happen since the KNGConfigItems should have the "real" daddys
         raise NotImplementedError('KNGGlobalConfigItemsProxy.christen!?')
 
 class KNGConfig(OrderedDict):
+    @trace
     def __init__(self, kernelng_conf_file=KERNELNG_CONF_FILE, repos_conf_file=REPOS_CONF_FILE):
         self._kernelng_conf_file = kernelng_conf_file
         self._repos_conf_file = repos_conf_file
         super(KNGConfig, self).__init__()
 
+    @trace
     def section_of(self, configitems):
         for section, cfgitems in list(self.items()):
             if cfgitems is configitems:
                 return section
         raise ValueError(configitems)
 
+    @trace
     def loadExampleConfig(self):
         self.clear()
         ecd = KNGExampleConfigData()
@@ -936,6 +1012,8 @@ class KNGConfig(OrderedDict):
         items go into an explicit global section which will be created on demand.
         '''
         return KNGGlobalConfigItemsProxy(self)
+
+    @trace
     def writeConfigText(self, file=None):
         '''
         Write the currently loaded configuration to a given file.
@@ -955,9 +1033,11 @@ class KNGConfig(OrderedDict):
                     else:
                         click.echo('%(itemkey)s = %(itemvalue)s' % { 'itemkey': item.key, 'itemvalue': item.value }, file=file)
 
+    @trace
     def createOverlay(self, uid, gid, perm):
         pass
 
+    @trace
     def __missing__(self, index):
         rv=KNGConfigItems(fetal=True, daddy=self)
         self[index] = rv
