@@ -226,7 +226,6 @@ try:
                 os.makedirs(EKERNELNG_CONF_DIR)
             outfile = click.open_file(KERNELNG_CONF_FILE, 'w')
         try:
-            from ..config import KNGConfig
             conf = KNGConfig()
             conf.loadExampleConfig()
             conf.writeConfigText(file=outfile)
