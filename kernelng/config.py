@@ -259,7 +259,7 @@ class KNGConfigItem(object):
                         self._reason = 'default'
                     else:
                         self._reason = 'stored'
-                self._daddy.christen(self)
+                self._daddy.christen()
         if self.reason == 'default':
             # if the value has changed to a non-default value, then
             # reason will need to change to 'stored'.  Pretty sure the
@@ -697,7 +697,7 @@ class KNGConfigItems(list):
         return v
 
     @trace
-    def christen(self, item):
+    def christen(self):
         # item is not used ATM, this is just a notification that we now have at least
         # one nonfetal item, which is enough.
         self._fetal = False
