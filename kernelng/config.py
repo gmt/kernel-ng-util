@@ -89,7 +89,15 @@ SUBCONSTS = {
     'kngconf': KERNELNG_CONF,
     'kngconffile': KERNELNG_CONF_FILE,
     'eprefix': EPREFIX,
+    'lc': '%s%s' % (
+        click.style('LOADCONFIG', fg='blue', bold=True),
+        click.style(':', fg='white', bold=True)
+    )
 }
+
+CONFIG_COMMENT_RE = re.compile('\s*#|\s*$', re.UNICODE)
+CONFIG_SECTION_RE = re.compile('\s*\[\s*([^][]*[^][\s]+)\s*\]\s*$', re.UNICODE)
+CONFIG_SETTING_RE = re.compile('\s*([^\d\W][\w-]*)\s*=\s*($|.*\S+)\s*$', re.UNICODE)
 
 def subconsts(text, subconsts=SUBCONSTS):
     """Utility function to make substitutions from a dictionary of constants."""
@@ -1074,7 +1082,49 @@ class KNGConfig(OrderedDict):
                       append any new settings values to the end of their corresponding sections.
         '''
         if file is None:
-            file = KERNELNG_CONF_FILE
+            file = click.open_file(KERNELNG_CONF_FILE, mode='r')
+        with file:
+            self.clear()
+            section = 'implicit_global'
+            for lineindex, line in enumerate((line.rstrip('\n') for line in file)):
+                if CONFIG_COMMENT_RE.match(line):
+                    self[section].appendnew(line)
+                    continue
+                m = CONFIG_SECTION_RE.match(line)
+                if m:
+                    section = m.group(1)
+                    self[section].christen()
+                    echov(_sc('%s read section header: "%s"' % ('%(lc)s', click.style(section, fg='yellow', bold=True))), 2)
+                    continue
+                m = CONFIG_SETTING_RE.match(line)
+                if m:
+                    key, val = m.groups()
+                    if key in self[section]:
+                        raise KeyError('%s (line %s): [%s].%s first assigned as '
+                            '"%s", then re-assigned as "%s".' % (click.format_filename(file.name), lineindex, section,
+                            key, self[section][key].value, val))
+                    self[section][key] = val
+                    echov(_sc('%s loaded configuration setting: %s%s%s%s%s %s %s%s%s' % (
+                        '%(lc)s',
+                        click.style('[', fg='white', bold=True),
+                        click.style(section, fg='yellow', bold=True),
+                        click.style(']', fg='white', bold=True),
+                        click.style('.', fg='white', bold=True),
+                        click.style(key, fg='blue', bold=True),
+                        click.style('=', fg='white', bold=True),
+                        click.style('"', fg='white', bold=True),
+                        click.style(val, fg='blue', bold=True),
+                        click.style('"', fg='white', bold=True)
+                    )), 2)
+                    continue
+                raise SyntaxError('%s (line %s): Syntax error: "%s" unrecognized.' % (click.format_filename(file.name), lineindex, line))
+
+        # ATM we need these dummy default settings around... maybe later they should be
+        # virtualized or something, this is pretty gross....?
+        gd = KNGGlobalDefaults()
+        for key in gd.keys():
+            if not key in self.globals:
+                self.globals.appendnew(key=key, value=gd[key], reason='default')
 
     @trace
     def createOverlay(self, uid, gid, perm):
