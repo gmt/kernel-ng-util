@@ -686,6 +686,19 @@ class KNGConfigItems(list):
                 self._fetal = False
 
     @trace
+    def appendnew(self, *args, **kwargs):
+        '''
+        Constructs a new KNGConfigItem using the provided arguments.
+        If no daddy keyword argument is provided, then daddy=<this KNGConfigItems>
+        will be added to the provided KNGConfigItem constructor arguments.  The
+        constructed item is then appended to this KNGConfigItems and returned.
+        '''
+        kwargs['daddy'] = kwargs.pop('daddy', self)
+        rv = KNGConfigItem(*args, **kwargs)
+        self.append(rv)
+        return rv
+
+    @trace
     def extend(self, values):
         for v in values:
             self.append(v)
@@ -893,6 +906,10 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
                 realdeal.append(value)
                 return
         self.append_destination_guess().append(value)
+
+    @trace
+    def appendnew(self, *args, **kwargs):
+        self.append_destination_guess().appendnew(*args, **kwargs)
 
     @trace
     def clear(self):
