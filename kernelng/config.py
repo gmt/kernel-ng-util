@@ -99,6 +99,9 @@ def subconsts(text, subconsts=SUBCONSTS):
         echov('subconsts: error substituting in "%s": %s.' % (text, str(e)), err=True)
         raise
 
+# convenience alias
+_sc = subconsts
+
 class KNGConfigItemUnknownReason(Exception):
     def __init__(self, key, value, reason):
         super(KNGConfigItemUnknownReason, self).__init__(
