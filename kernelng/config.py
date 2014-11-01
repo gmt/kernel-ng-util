@@ -524,14 +524,15 @@ kng_global_defaults = None
 
 @trace
 def KNGGlobalDefaults():
+    global kng_global_defaults
     if kng_global_defaults:
         return kng_global_defaults.copy()
     ecd = KNGExampleConfigData()
-    implicit = ecd['implicit_global'] if ecd.has_key('implicit_global') else ()
-    explicit = ecd['global'] if ecd.has_key('global') else ()
+    implicit = ecd['implicit_global'] if 'implicit_global' in ecd else ()
+    explicit = ecd['global'] if 'global' in ecd else ()
     result = {
         valitem[0]: valitem[1]
-        for valitem in chain(implicitKNGGlobalDefaults, explicitKNGGlobalDefaults)
+        for valitem in chain(implicit, explicit)
         if isinstance(valitem, tuple) and (len(valitem) < 4 or not valitem[3])
     }
     kng_global_defaults = result.copy()
