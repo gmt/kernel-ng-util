@@ -983,6 +983,7 @@ class KNGConfig(OrderedDict):
     def __init__(self, kernelng_conf_file=KERNELNG_CONF_FILE, repos_conf_file=REPOS_CONF_FILE):
         self._kernelng_conf_file = kernelng_conf_file
         self._repos_conf_file = repos_conf_file
+        self._globals = None
         super(KNGConfig, self).__init__()
 
     @trace
@@ -1034,7 +1035,9 @@ class KNGConfig(OrderedDict):
         only one of these sections exist, new items go into it; when neither section exists, new
         items go into an explicit global section which will be created on demand.
         '''
-        return KNGGlobalConfigItemsProxy(self)
+        if self._globals is None:
+            self._globals = KNGGlobalConfigItemsProxy(self)
+        return self._globals
 
     @trace
     def writeConfigText(self, file=None, no_comments=False):
