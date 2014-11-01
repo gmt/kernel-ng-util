@@ -732,7 +732,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
     def _fake_self_for_query(self):
         return list(self._implicit) + list(self._explicit)
 
-    def _fake_self_for_append(self):
+    def append_destination_guess(self):
         if not self._explicit.fetal:
             return self._explicit
         elif not self._implicit.fetal:
@@ -789,7 +789,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
     @trace
     def _missing(self, key):
         # add a "fetal" KNGConfigItem for the provided key, analogous to __missing__ in dict
-        real_daddy=self._fake_self_for_append()
+        real_daddy=self.append_destination_guess()
         rv = KNGConfigItem(key, None, default=self.find_default(key), daddy=real_daddy)
         real_daddy.append(rv)
         return rv
@@ -800,7 +800,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
             raise ValueError('KNGGlobalConfigItemsProxy.__setitem__: use del instead? assigning None is prohibited.')
         elif index == '__comment__':
             # always treat this as a request to append a new comment
-            real_daddy = self._fake_self_for_append()
+            real_daddy = self.append_destination_guess()
             real_daddy._fetal = False
             real_daddy.append(KNGConfigItem(value, daddy=real_daddy))
             return
@@ -836,9 +836,9 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
                     item.value = value
                     return
         if isinstance(value, KNGConfigItem):
-            self._fake_self_for_append().append(value)
+            self.append_destination_guess().append(value)
         else:
-            self._fake_self_for_append().append(KNGConfigItem(index, value, daddy=self))
+            self.append_destination_guess().append(KNGConfigItem(index, value, daddy=self))
 
     @trace
     def __delitem__(self, index):
@@ -892,7 +892,7 @@ class KNGGlobalConfigItemsProxy(KNGConfigItems):
                 del(realdeal[itemindex])
                 realdeal.append(value)
                 return
-        self._fake_self_for_append().append(value)
+        self.append_destination_guess().append(value)
 
     @trace
     def clear(self):
